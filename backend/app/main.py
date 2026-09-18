@@ -23,6 +23,11 @@ from .agents.decision import decide
 from .agents.action import execute
 from .agents.escalation import escalate
 from .ledger_service import get_or_create_ledger, get_all_ledgers
+from .routers.disputes import router as disputes_router
+from .routers.demo import router as demo_router
+
+app.include_router(disputes_router)
+app.include_router(demo_router)
 
 # ─── Health ───────────────────────────────────────────────────────────────────
 @app.get("/api/health")
@@ -36,6 +41,10 @@ async def health_check(redis_client: redis.Redis = Depends(get_redis)):
             content={"error": "Service Unavailable", "detail": "Could not connect to Redis"}
         )
 
+# ─── DEV-ONLY endpoints (NOT part of CONTRACT.md surface) ──────────────────
+# Kept for Phases 2-4 debugging now that the real pipeline
+# (POST /api/disputes/ingest via routers/disputes.py + orchestrator.py)
+# covers their purpose. Do not use in prod/demo frontend.
 # ─── DEV: Sample generator ────────────────────────────────────────────────────
 @app.get("/api/dev/generate-sample")
 async def generate_sample():
