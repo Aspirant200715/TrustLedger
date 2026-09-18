@@ -24,3 +24,17 @@ async def health_check(redis_client: redis.Redis = Depends(get_redis)):
             status_code=503,
             content={"error": "Service Unavailable", "detail": "Could not connect to Redis"}
         )
+
+from .synthetic_data import generate_dispute
+
+@app.get("/api/dev/generate-sample")
+async def generate_sample():
+    """DEV ONLY: Generate 5 sample disputes to test the synthetic data generator."""
+    samples = []
+    for _ in range(5):
+        dispute, mock_ledger = generate_dispute()
+        samples.append({
+            "dispute": dispute.model_dump(mode="json"),
+            "mock_ledger_state": mock_ledger
+        })
+    return {"samples": samples}
