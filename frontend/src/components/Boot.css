@@ -1,7 +1,8 @@
-/* Boot.css — branded splash ("Secure Handshake"), payment-app grade.
- * A rich royal-blue gradient canvas with floating light orbs, a faint dot
- * grid, expanding halo rings behind a self-drawing white seal, a security
- * badge, and a shimmer progress bar. Feels premium, never white-on-white.
+/* Boot.css — branded splash, editorial + colorful.
+ * Light canvas with vivid gradient orbs (sky, mint, violet), a dark serif
+ * wordmark that types itself in, a self-drawing ink seal with glowing rings,
+ * colourful feature chips, and a shimmer progress bar. Eye-catching, never a
+ * flat wall of blue.
  */
 
 .tl-boot {
@@ -12,10 +13,11 @@
   place-items: center;
   overflow: hidden;
   background:
-    radial-gradient(110% 80% at 15% 0%, rgba(96, 165, 250, 0.45), transparent 55%),
-    radial-gradient(90% 80% at 100% 100%, rgba(37, 99, 235, 0.5), transparent 55%),
-    radial-gradient(60% 60% at 80% 20%, rgba(129, 140, 248, 0.35), transparent 50%),
-    linear-gradient(160deg, #2563eb 0%, #1e40af 55%, #172554 100%);
+    radial-gradient(90% 60% at 12% 8%, rgba(96, 165, 250, 0.28), transparent 55%),
+    radial-gradient(80% 60% at 96% 12%, rgba(45, 212, 191, 0.18), transparent 55%),
+    radial-gradient(72% 60% at 85% 92%, rgba(196, 181, 253, 0.3), transparent 55%),
+    radial-gradient(50% 40% at 30% 80%, rgba(251, 191, 36, 0.12), transparent 50%),
+    linear-gradient(180deg, #fdfeff 0%, #f3f6fb 100%);
   animation: tl-fade-in 200ms var(--ease-out) both;
 }
 .tl-boot.is-exiting {
@@ -27,17 +29,17 @@
   pointer-events: none;
 }
 
-/* Floating gradient orbs */
+/* Floating colourful orbs */
 .tl-boot-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
+  filter: blur(60px);
   will-change: transform;
 }
 .tl-boot-orb-1 {
   width: 340px;
   height: 340px;
-  background: rgba(147, 197, 253, 0.5);
+  background: rgba(59, 130, 246, 0.26);
   top: -90px;
   left: -80px;
   animation: tl-orb 9s ease-in-out infinite;
@@ -45,16 +47,16 @@
 .tl-boot-orb-2 {
   width: 280px;
   height: 280px;
-  background: rgba(45, 212, 191, 0.3);
+  background: rgba(16, 185, 129, 0.2);
   bottom: -70px;
   right: -50px;
   animation: tl-orb 11s ease-in-out infinite reverse;
 }
 .tl-boot-orb-3 {
-  width: 200px;
-  height: 200px;
-  background: rgba(199, 210, 254, 0.35);
-  top: 42%;
+  width: 210px;
+  height: 210px;
+  background: rgba(139, 92, 246, 0.24);
+  top: 40%;
   left: 58%;
   animation: tl-orb 13s ease-in-out infinite 2s;
 }
@@ -67,7 +69,7 @@
 .tl-boot-grid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.5px);
+  background-image: radial-gradient(rgba(30, 64, 175, 0.14) 1px, transparent 1.5px);
   background-size: 24px 24px;
   -webkit-mask-image: radial-gradient(65% 60% at 50% 45%, #000 20%, transparent 100%);
   mask-image: radial-gradient(65% 60% at 50% 45%, #000 20%, transparent 100%);
@@ -93,41 +95,41 @@
   height: 190px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border: 1.5px solid rgba(37, 99, 235, 0.28);
   animation: tl-ring 3.4s var(--ease-out) infinite;
 }
-.tl-boot-halo-2 { animation-delay: 1.7s; }
+.tl-boot-halo-2 { border-color: rgba(16, 185, 129, 0.25); animation-delay: 1.7s; }
 @keyframes tl-ring {
   0% { width: 170px; height: 170px; opacity: 0.9; }
   100% { width: 360px; height: 360px; opacity: 0; }
 }
 
-/* Self-drawing white seal */
+/* Self-drawing ink seal */
 .tl-seal {
   position: relative;
   width: 92px;
   height: 92px;
-  filter: drop-shadow(0 6px 24px rgba(2, 6, 23, 0.35));
+  filter: drop-shadow(0 6px 22px rgba(15, 23, 42, 0.16));
 }
 .s-draw {
   fill: none;
   stroke-width: 4.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke: #ffffff;
+  stroke: #0f172a;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: tl-draw 680ms var(--ease-out) forwards;
 }
 .s-circle { animation-delay: 0ms; }
 .s-bars { animation-delay: 220ms; }
-.s-check { stroke: #6ee7b7; animation-delay: 420ms; }
+.s-check { stroke: #059669; animation-delay: 420ms; }
 
 @keyframes tl-draw {
   to { stroke-dashoffset: 0; }
 }
 
-/* Security badge popping onto the seal */
+/* Colourful security badge popping onto the seal */
 .tl-boot-shield {
   position: absolute;
   right: -10px;
@@ -135,23 +137,23 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #ffffff;
-  color: #1d4ed8;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #ffffff;
   display: grid;
   place-items: center;
-  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.3);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
   animation: tl-pop-in 400ms var(--ease-out) 900ms both;
 }
 .tl-boot-shield svg { width: 16px; height: 16px; }
 
+/* Dark serif wordmark */
 .tl-boot-word {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: 42px;
   font-weight: 650;
   letter-spacing: -0.02em;
-  color: #ffffff;
-  text-shadow: 0 2px 24px rgba(2, 6, 23, 0.35);
+  color: #0f172a;
   animation: tl-fade-in 360ms var(--ease-out) 160ms both;
 }
 /* Staggered letter reveal */
@@ -168,10 +170,10 @@
 .tl-boot-tag {
   margin: 8px 0 0;
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
+  font-weight: 700;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(199, 210, 254, 0.9);
+  color: #2563eb;
   animation: tl-fade-in 360ms var(--ease-out) 260ms both;
 }
 
@@ -180,24 +182,23 @@
   min-height: 20px;
   font-size: 13.5px;
   font-weight: 500;
-  color: rgba(241, 245, 249, 0.78);
+  color: #64748b;
   animation: tl-fade-in 260ms var(--ease-out) both;
 }
 
 /* Shimmer progress bar */
 .tl-boot-bar {
   margin-top: 30px;
-  width: 200px;
+  width: 210px;
   height: 5px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(37, 99, 235, 0.14);
   overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(2, 6, 23, 0.2);
 }
 .tl-boot-bar-fill {
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, #ffffff, #bfdbfe, #ffffff);
+  background: linear-gradient(90deg, #2563eb, #3b82f6, #2563eb);
   background-size: 200% 100%;
   animation:
     tl-boot-progress 1800ms var(--ease-out) both,
@@ -213,7 +214,7 @@
   100% { background-position: -100% 0; }
 }
 
-/* Feature chips popping in */
+/* Feature chips popping in — white cards, colourful dots */
 .tl-boot-chips {
   margin-top: 26px;
   display: flex;
@@ -227,10 +228,10 @@
   gap: 7px;
   padding: 8px 15px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(6px);
-  color: rgba(241, 245, 249, 0.92);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--hairline-strong);
+  box-shadow: var(--shadow-sm);
+  color: #334155;
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -250,9 +251,9 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.c-emerald { background: #6ee7b7; }
-.c-sky { background: #93c5fd; }
-.c-violet { background: #c4b5fd; }
+.c-emerald { background: #10b981; }
+.c-sky { background: #3b82f6; }
+.c-violet { background: #8b5cf6; }
 
 /* Footer strip */
 .tl-boot-foot {
@@ -265,7 +266,7 @@
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.04em;
-  color: rgba(199, 210, 254, 0.7);
+  color: #94a3b8;
   animation: tl-fade-in 600ms var(--ease-out) 900ms both;
 }
 

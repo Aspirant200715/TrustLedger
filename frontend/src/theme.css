@@ -337,10 +337,6 @@ textarea.field { padding-block: 10px; line-height: 1.5; resize: vertical; }
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
-.dark .tl-boot-word { color: #ffffff; }
-.dark .tl-boot-status { color: rgba(241, 245, 249, 0.78); }
-.dark .tl-boot-bar { background: rgba(255, 255, 255, 0.2); }
-
 .dark .tl-shimmer-row, .dark .tl-shimmer-dial { background: rgba(148, 163, 184, 0.1); }
 .dark .tl-shimmer-row::after, .dark .tl-shimmer-dial::after {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);

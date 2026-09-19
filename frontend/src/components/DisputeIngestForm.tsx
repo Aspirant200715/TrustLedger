@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, LoaderCircle, ShieldAlert } from "lucide-react";
+import { Check, ChevronDown, LoaderCircle, Scale, ShieldAlert } from "lucide-react";
 import { ingestDispute } from "../api";
 import type { DisputeCategory, IngestRequest, IngestResponse } from "../types";
 import { CATEGORY_LABEL, TIER_LABEL, inr } from "../format";
@@ -78,6 +78,9 @@ export default function DisputeIngestForm({ onNotice }: Props) {
     <section className="tl-panel tl-ingest-panel" aria-labelledby="manual-ingest-heading">
       <div className="tl-ingest-wrap">
         <div className="tl-ingest-head">
+          <span className="tl-ingest-icon" aria-hidden="true">
+            <Scale />
+          </span>
           <p className="tl-kicker">Manual case intake</p>
           <h2 id="manual-ingest-heading">Investigate a customer dispute</h2>
           <p>
@@ -102,36 +105,38 @@ export default function DisputeIngestForm({ onNotice }: Props) {
             </select>
           </label>
 
-          <label>
-            <span>Amount (INR)</span>
-            <div className="tl-money-field">
-              <b aria-hidden="true">₹</b>
-              <input
-                className="field"
-                type="number"
-                min="0.01"
-                max="10000000"
-                step="0.01"
-                required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="12,500.00"
-              />
-            </div>
-          </label>
+          <div className="tl-ingest-row">
+            <label>
+              <span>Amount (INR)</span>
+              <div className="tl-money-field">
+                <b aria-hidden="true">₹</b>
+                <input
+                  className="field"
+                  type="number"
+                  min="0.01"
+                  max="10000000"
+                  step="0.01"
+                  required
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="12,500.00"
+                />
+              </div>
+            </label>
 
-          <label>
-            <span>UTR / transaction reference</span>
-            <input
-              className="field tl-mono"
-              minLength={4}
-              maxLength={64}
-              required
-              value={utr}
-              onChange={(e) => setUtr(e.target.value)}
-              placeholder="324761908415"
-            />
-          </label>
+            <label>
+              <span>UTR / transaction reference</span>
+              <input
+                className="field tl-mono"
+                minLength={4}
+                maxLength={64}
+                required
+                value={utr}
+                onChange={(e) => setUtr(e.target.value)}
+                placeholder="324761908415"
+              />
+            </label>
+          </div>
 
           <label className="tl-ingest-ticket">
             <span>Customer ticket</span>
