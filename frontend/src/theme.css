@@ -1,0 +1,247 @@
+/* theme.css — "The Clearing House" design language.
+ *
+ * Editorial finance-broadsheet × precision instrument. Serif display,
+ * aurum brand signal, obsidian ink. Tier colors stay semantic
+ * (slate / amber / emerald) and never decorative.
+ *
+ * MOTION TIERS (one language, three scales):
+ *  micro  (120–160ms, ease-out)      buttons, chips, inputs, toggles
+ *  medium (240–320ms, ease-out)      panels, toasts, filters, log lines
+ *  large  (480–720ms, ease-out)      boot, hero, section reveals, tier flash
+ */
+
+:root {
+  /* ——— Ink & paper ——— */
+  --ink-0: #060709;          /* page base — near-black, warm */
+  --ink-1: #0b0d12;          /* raised base */
+  --surface-1: #10141d;      /* cards */
+  --surface-2: #161c2b;      /* elevated / inputs */
+  --surface-3: #1e2639;      /* hover */
+  --hairline: rgba(214, 196, 164, 0.13);
+  --hairline-strong: rgba(214, 196, 164, 0.28);
+
+  /* ——— Text hierarchy ——— */
+  --text-1: #f5f1e6;         /* parchment white */
+  --text-2: #c9c2b2;         /* warm gray */
+  --text-3: #8f8a7c;         /* muted */
+  --text-4: #5b574d;         /* faint */
+
+  /* ——— Brand signal: aurum ——— */
+  --aurum: #e3a83c;
+  --aurum-hi: #f6c86b;
+  --aurum-deep: #8a5f14;
+  --aurum-glow: rgba(227, 168, 60, 0.32);
+
+  /* ——— Tier semantics (meaning only) ——— */
+  --tier-suggest-fg: #b6bcc9;
+  --tier-suggest-bg: rgba(150, 160, 180, 0.1);
+  --tier-suggest-line: rgba(150, 160, 180, 0.42);
+  --tier-draft-fg: #f2c14e;
+  --tier-draft-bg: rgba(227, 168, 60, 0.1);
+  --tier-draft-line: rgba(227, 168, 60, 0.55);
+  --tier-auto-fg: #5fe3a5;
+  --tier-auto-bg: rgba(63, 185, 125, 0.1);
+  --tier-auto-line: rgba(63, 185, 125, 0.6);
+  --mint: #5fe3a5;
+  --mint-glow: rgba(95, 227, 165, 0.32);
+  --rose: #f0707f;
+  --rose-glow: rgba(240, 112, 127, 0.3);
+  --iris: #9aa3f7;
+
+  /* ——— Type ——— */
+  --font-display: Didot, "Bodoni MT", "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  --display-size: clamp(34px, 5vw, 60px);
+
+  /* ——— Shape & depth ——— */
+  --r-sm: 7px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --shadow-card: 0 22px 55px -26px rgba(0, 0, 0, 0.85);
+  --shadow-pop: 0 30px 80px -24px rgba(0, 0, 0, 0.85);
+
+  /* ——— Motion ——— */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.3, 1.35, 0.4, 1);
+  --dur-micro: 140ms;
+  --dur-med: 280ms;
+  --dur-large: 620ms;
+}
+
+/* ————————————————— Primitives ————————————————— */
+
+.btn {
+  font: 600 13.5px/1 var(--font-sans);
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 11px 18px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline-strong);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  color: var(--text-1);
+  cursor: pointer;
+  transition:
+    transform var(--dur-micro) var(--ease-out),
+    background var(--dur-med),
+    border-color var(--dur-med),
+    box-shadow var(--dur-med);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+/* Sheen sweep on hover — brand light travelling across the control */
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(246, 200, 107, 0.16) 50%, transparent 60%);
+  transform: translateX(-110%);
+  transition: transform 0.55s var(--ease-out);
+  pointer-events: none;
+}
+.btn:hover:not(:disabled)::after { transform: translateX(110%); }
+.btn:hover:not(:disabled) {
+  border-color: rgba(227, 168, 60, 0.55);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px -14px var(--aurum-glow);
+}
+.btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: wait; }
+.btn.is-done {
+  border-color: var(--tier-auto-line);
+  color: var(--tier-auto-fg);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--aurum-hi), var(--aurum) 60%, #c78f2b);
+  border-color: rgba(246, 200, 107, 0.65);
+  color: #241a05;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 30px -12px var(--aurum-glow);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 14px 38px -12px var(--aurum-glow);
+  border-color: var(--aurum-hi);
+}
+.btn-primary .tl-spinner { border-color: rgba(36, 26, 5, 0.3); border-top-color: #241a05; }
+
+.btn-danger {
+  background: transparent;
+  border-color: rgba(240, 112, 127, 0.45);
+  color: var(--rose);
+}
+.btn-danger:hover:not(:disabled) {
+  background: rgba(240, 112, 127, 0.09);
+  border-color: var(--rose);
+  box-shadow: 0 8px 26px -12px var(--rose-glow);
+}
+.btn-danger::after { display: none; }
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-3);
+  min-height: 0;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(214, 196, 164, 0.08);
+  color: var(--text-1);
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.btn-ghost::after { display: none; }
+
+.btn-sm { min-height: 38px; padding: 8px 14px; font-size: 12.5px; }
+
+.field {
+  font: 500 13.5px var(--font-sans);
+  color: var(--text-1);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  padding: 0 13px;
+  min-height: 42px;
+  transition: border-color var(--dur-med), box-shadow var(--dur-med), background var(--dur-med);
+}
+.field:hover { border-color: rgba(227, 168, 60, 0.4); }
+.field::placeholder { color: var(--text-4); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 10.5px/1 var(--font-sans);
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge-suggest_only { color: var(--tier-suggest-fg); background: var(--tier-suggest-bg); border-color: var(--tier-suggest-line); }
+.badge-draft_for_approval { color: var(--tier-draft-fg); background: var(--tier-draft-bg); border-color: var(--tier-draft-line); }
+.badge-auto_execute {
+  color: var(--tier-auto-fg);
+  background: var(--tier-auto-bg);
+  border-color: var(--tier-auto-line);
+  box-shadow: 0 0 18px -6px var(--mint-glow);
+}
+
+.card {
+  background: linear-gradient(180deg, var(--surface-1), #090c15);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+/* ————————————————— Motion keyframes (the whole product's vocabulary) ————————————————— */
+
+@keyframes tl-rise {
+  from { opacity: 0; transform: translateY(20px); filter: blur(7px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes tl-pop-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes tl-pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes tl-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@keyframes tl-flash-ring {
+  0% { box-shadow: 0 0 0 0 rgba(227, 168, 60, 0.5); }
+  100% { box-shadow: 0 0 0 18px rgba(227, 168, 60, 0); }
+}
+@keyframes tl-toast-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes tl-stream-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+/* Scroll-reveal: starts hidden, .is-in releases it */
+.tl-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity var(--dur-large) var(--ease-out),
+    transform var(--dur-large) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.tl-reveal.is-in { opacity: 1; transform: none; }
+
+.anim-rise { animation: tl-rise var(--dur-large) var(--ease-out) both; }
+.anim-pop { animation: tl-pop-in var(--dur-med) var(--ease-out) both; }

@@ -1,7 +1,7 @@
-// Dashboard.tsx — TrustLedger main demo screen (Phase 9).
-//
-// Reads CONTRACT.md + src/types.ts + src/api.ts before modifying.
-import { useCallback, useEffect, useRef, useState } from "react";
+// Dashboard.tsx — the Clearing House floor.
+// Data orchestration + composition. All backend contact via src/api.ts;
+// contracts unchanged. Boot overlay choreographs first paint.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ApiError,
   getLedger,
@@ -15,8 +15,14 @@ import type {
   DisputeCategory,
   EscalationPacket,
   LedgerRecord,
-  TierLevel,
 } from "../types";
+import Boot from "../components/Boot";
+import DemoTheater from "../components/DemoTheater";
+import EscalationQueue from "../components/EscalationQueue";
+import LedgerCard from "../components/LedgerCard";
+import Reveal from "../components/Reveal";
+import { LedgerSkeletons } from "../components/Skeletons";
+import Toasts, { type Toast } from "../components/Toasts";
 import "./Dashboard.css";
 
 const CATEGORIES: DisputeCategory[] = [
@@ -28,48 +34,55 @@ const CATEGORIES: DisputeCategory[] = [
 ];
 
 const POLL_MS = 3000;
-const DEMO_STEP_DELAY_MS = 300;
+const DEMO_STEP_DELAY_MS = 320;
 
-function nextThreshold(tier: TierLevel): number | null {
-  if (tier === "suggest_only") return 15;
-  if (tier === "draft_for_approval") return 30;
-  return null; // auto_execute: nothing above
-}
-
-function lifetimeAccuracy(rec: LedgerRecord): string {
-  if (rec.lifetime_total === 0) return "—";
-  return `${((rec.lifetime_correct / rec.lifetime_total) * 100).toFixed(1)}%`;
-}
+type IngestPhase = "idle" | "working" | "done";
 
 function errorText(err: unknown): string {
   return err instanceof ApiError ? `${err.error}: ${err.detail}` : String(err);
 }
 
-interface Toast {
-  text: string;
-  tone: "ok" | "error";
+function useOnline(): boolean {
+  const [online, setOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  return online;
 }
 
 export default function Dashboard() {
+  const [booted, setBooted] = useState(false);
   const [ledgers, setLedgers] = useState<LedgerRecord[] | null>(null);
   const [escalations, setEscalations] = useState<EscalationPacket[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ingestCat, setIngestCat] = useState<DisputeCategory | "random">("random");
-  const [ingesting, setIngesting] = useState(false);
-  const [toast, setToast] = useState<Toast | null>(null);
+  const [ingestPhase, setIngestPhase] = useState<IngestPhase>("idle");
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [busyReviewId, setBusyReviewId] = useState<string | null>(null);
-  const [demoCat, setDemoCat] = useState<DisputeCategory | null>(null); // running demo
+  const [demoCat, setDemoCat] = useState<DisputeCategory | null>(null);
   const [demoLog, setDemoLog] = useState<DemoEvent[]>([]);
   const [flashCat, setFlashCat] = useState<DisputeCategory | null>(null);
+  const online = useOnline();
 
-  const toastTimer = useRef<number | null>(null);
+  const toastId = useRef(0);
   const flashTimer = useRef<number | null>(null);
-  const logRef = useRef<HTMLDivElement | null>(null);
+  const ingestTimer = useRef<number | null>(null);
 
-  const showToast = useCallback((text: string, tone: Toast["tone"] = "ok") => {
-    setToast({ text, tone });
-    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 5000);
+  const pushToast = useCallback((text: string, tone: Toast["tone"] = "ok") => {
+    const id = ++toastId.current;
+    setToasts((prev) => [...prev.slice(-3), { id, text, tone }]);
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5200);
   }, []);
 
   const refetch = useCallback(async () => {
@@ -78,7 +91,6 @@ export default function Dashboard() {
     setEscalations(escRes.escalations);
   }, []);
 
-  // Initial load + live polling every 3s (cleanup on unmount).
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -97,248 +109,312 @@ export default function Dashboard() {
     };
   }, [refetch]);
 
-  // Cleanup pending toast/flash timers on unmount.
   useEffect(() => {
     return () => {
-      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
       if (flashTimer.current !== null) window.clearTimeout(flashTimer.current);
+      if (ingestTimer.current !== null) window.clearTimeout(ingestTimer.current);
     };
   }, []);
 
-  // Auto-scroll the demo log feed as events append.
-  useEffect(() => {
-    const el = logRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [demoLog]);
-
-  const ledgerByCat = useCallback(
-    (cat: DisputeCategory): LedgerRecord | undefined =>
-      ledgers?.find((l) => l.category === cat),
-    [ledgers],
-  );
+  const stats = useMemo(() => {
+    if (!ledgers) return null;
+    const reviews = ledgers.reduce((n, l) => n + l.lifetime_total, 0);
+    const auto = ledgers.filter((l) => l.current_tier === "auto_execute").length;
+    const correct = ledgers.reduce((n, l) => n + l.lifetime_correct, 0);
+    return {
+      reviews,
+      auto,
+      pending: escalations.length,
+      accuracy: reviews === 0 ? "—" : `${((correct / reviews) * 100).toFixed(1)}%`,
+    };
+  }, [ledgers, escalations.length]);
 
   const handleIngest = useCallback(async () => {
-    setIngesting(true);
+    setIngestPhase("working");
     try {
       const res = await ingestDispute(ingestCat === "random" ? null : ingestCat);
       const d = res.dispute.decision;
-      showToast(
-        `Ingested ${res.dispute.id.slice(0, 8)} (${res.dispute.category}, ₹${res.dispute.amount}) → final_path=${d?.final_path ?? "?"}${d?.stakes_override ? " · STAKES OVERRIDE" : ""}`,
+      setIngestPhase("done");
+      ingestTimer.current = window.setTimeout(() => setIngestPhase("idle"), 1400);
+      pushToast(
+        `${res.dispute.category} · ₹${res.dispute.amount} → ${d?.final_path ?? "escalated"}${d?.stakes_override ? " · stakes override" : ""}`,
       );
       await refetch();
     } catch (err) {
-      showToast(errorText(err), "error");
-    } finally {
-      setIngesting(false);
+      setIngestPhase("idle");
+      pushToast(errorText(err), "error");
     }
-  }, [ingestCat, refetch, showToast]);
+  }, [ingestCat, refetch, pushToast]);
 
   const handleReview = useCallback(
     async (disputeId: string, outcome: "confirmed_correct" | "overturned") => {
       setBusyReviewId(disputeId);
       try {
         const res = await reviewDispute(disputeId, outcome);
-        showToast(
-          `Reviewed ${disputeId.slice(0, 8)} as ${outcome} → ${res.ledger_after.category} now ${res.ledger_after.current_tier}`,
+        pushToast(
+          `${outcome === "overturned" ? "Overturned" : "Confirmed"} ${disputeId.slice(0, 8)} → ${res.ledger_after.category} now ${res.ledger_after.current_tier.replaceAll("_", " ")}`,
         );
         await refetch();
       } catch (err) {
-        showToast(errorText(err), "error");
+        pushToast(errorText(err), "error");
       } finally {
         setBusyReviewId(null);
       }
     },
-    [refetch, showToast],
+    [refetch, pushToast],
   );
 
   const handleDemo = useCallback(
     async (category: DisputeCategory) => {
-      if (demoCat !== null) return; // one demo at a time
+      if (demoCat !== null) return;
       setDemoCat(category);
       setDemoLog([]);
-      showToast(`Demo sequence started for ${category} (31 steps)…`);
+      pushToast(`Replaying ${category} — 31 cases, watch its instrument.`);
       try {
         const { events } = await seedDemo(category);
-        let prevTier: TierLevel | null = null;
+        let prev: string | null = null;
         for (const e of events) {
           await new Promise((r) => setTimeout(r, DEMO_STEP_DELAY_MS));
-          setDemoLog((prev) => [...prev, e]);
-          if (prevTier !== null && e.tier_after !== prevTier) {
+          setDemoLog((log) => [...log, e]);
+          if (prev !== null && e.tier_after !== prev) {
             setFlashCat(category);
             if (flashTimer.current !== null) window.clearTimeout(flashTimer.current);
-            flashTimer.current = window.setTimeout(() => setFlashCat(null), 2500);
+            flashTimer.current = window.setTimeout(() => setFlashCat(null), 2600);
           }
-          prevTier = e.tier_after;
+          prev = e.tier_after;
         }
         await refetch();
-        showToast(`Demo finished for ${category} — watch the card above.`);
+        pushToast(`Replay complete — ${category} held its final tier.`);
       } catch (err) {
-        showToast(errorText(err), "error");
+        pushToast(errorText(err), "error");
       } finally {
         setDemoCat(null);
       }
     },
-    [demoCat, refetch, showToast],
+    [demoCat, refetch, pushToast],
   );
 
   return (
-    <div className="tl-root">
-      <header className="tl-header">
-        <div>
-          <h1>
-            Trust<span className="accent">Ledger</span>
-          </h1>
-          <p>AI teammate that earns the right to act with real money.</p>
+    <div className="tl-app">
+      {!booted && <Boot onDone={() => setBooted(true)} />}
+
+      <div className="tl-backdrop" aria-hidden="true">
+        <span className="tl-aurora tl-aurora-a" />
+        <span className="tl-aurora tl-aurora-b" />
+        <span className="tl-grid-overlay" />
+        <span className="tl-grain" />
+      </div>
+
+      <header className="tl-topbar">
+        <div className="tl-brand">
+          <span className="tl-mark" aria-hidden="true">
+            <i />
+          </span>
+          <span className="tl-brand-name">
+            Trust<em>Ledger</em>
+          </span>
+          <span className="tl-env-badge">clearing house</span>
         </div>
-        <div className="tl-live">
-          <span className="tl-dot" />
-          live · polling ledger every 3s
+        <nav className="tl-nav" aria-label="Console sections">
+          <a href="#ledger">Ledger</a>
+          <a href="#desk">Desk</a>
+          <a href="#theater">Replay</a>
+        </nav>
+        <div className="tl-live" role="status">
+          <span className="tl-live-dot" aria-hidden="true" />
+          {loadError ? "backend unreachable" : "live · 3s sync"}
         </div>
       </header>
 
-      {loadError && (
-        <div className="tl-error-banner">
-          Backend unreachable: {loadError} — is uvicorn running on :8000?
-        </div>
-      )}
+      {booted && (
+      <main className="tl-main">
+        {!online && (
+          <div className="tl-offline anim-pop" role="alert">
+            <strong>You're offline.</strong> Showing the last synced state —
+            actions will fail until the connection returns.
+          </div>
+        )}
 
-      <h2 className="tl-section-title">Trust ledger — autonomy per category</h2>
-      {!ledgers ? (
-        <p className="tl-empty">Loading ledger…</p>
-      ) : (
-        <div className="tl-grid">
-          {CATEGORIES.map((cat) => {
-            const rec = ledgerByCat(cat);
-            if (!rec) return null; // backend guarantees all 5; skip defensively
-            const threshold = nextThreshold(rec.current_tier);
-            const pct =
-              threshold === null
-                ? 100
-                : Math.min(100, (rec.in_tier_correct / threshold) * 100);
-            return (
-              <div
-                key={cat}
-                className={`tl-card${flashCat === cat ? " tl-flash" : ""}`}
-              >
-                <div className="tl-card-top">
-                  <span className="tl-cat">{cat}</span>
-                  <span className={`tl-badge ${rec.current_tier}`}>
-                    {rec.current_tier}
-                  </span>
-                </div>
-                <div className="tl-progress-label">
-                  <span>
-                    in-tier {rec.in_tier_correct}
-                    {threshold === null ? " (max tier)" : ` / ${threshold}`}
-                  </span>
-                  <span>{threshold === null ? "MAX" : `${Math.round(pct)}%`}</span>
-                </div>
-                <div className="tl-bar">
-                  <div style={{ width: `${pct}%` }} />
-                </div>
-                <div className="tl-meta">
-                  <span>
-                    lifetime accuracy: <strong>{lifetimeAccuracy(rec)}</strong> (
-                    {rec.lifetime_correct}/{rec.lifetime_total}
-                    {rec.lifetime_overturned > 0 &&
-                      `, ${rec.lifetime_overturned} overturned`}
-                    )
-                  </span>
-                  {rec.hard_capped && <span>hard-capped: max draft_for_approval</span>}
-                  <span>
-                    tier changes: <strong>{rec.tier_history.length}</strong>
-                  </span>
-                </div>
+        <section className="tl-hero anim-rise">
+          <p className="tl-kicker">Earned autonomy · real money · human override</p>
+          <h1 className="tl-display">
+            Every credit of trust,
+            <br />
+            <span className="tl-display-accent">settled in public.</span>
+          </h1>
+          <p className="tl-lede">
+            Each dispute category keeps its own ledger of autonomy. Correct
+            verdicts promote it toward auto-execution; one overturn demotes it.
+            Anything over ₹50,000 goes to a human — always.
+          </p>
+          {stats && (
+            <dl className="tl-stats">
+              <div className="tl-stat">
+                <dt>Cases settled</dt>
+                <dd className="tl-num">{stats.reviews}</dd>
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      <h2 className="tl-section-title">Ingest test dispute</h2>
-      <div className="tl-row">
-        <select
-          className="tl-select"
-          value={ingestCat}
-          onChange={(e) => setIngestCat(e.target.value as DisputeCategory | "random")}
-          aria-label="Dispute category"
-        >
-          <option value="random">random</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <button className="tl-btn solid" onClick={handleIngest} disabled={ingesting}>
-          {ingesting ? "Ingesting…" : "Ingest test dispute"}
-        </button>
-      </div>
-      {toast && <div className={`tl-toast${toast.tone === "error" ? " error" : ""}`}>{toast.text}</div>}
-
-      <h2 className="tl-section-title">
-        Escalation queue ({escalations.length} pending)
-      </h2>
-      {escalations.length === 0 ? (
-        <p className="tl-empty">Queue empty — nothing awaiting human review.</p>
-      ) : (
-        <div className="tl-esc-list">
-          {escalations.map((p) => (
-            <div key={p.dispute_id} className={`tl-esc ${p.escalation_reason}`}>
-              <span className="reason">{p.escalation_reason}</span>
-              <p>{p.intent_summary}</p>
-              <p className="tl-meta">id {p.dispute_id.slice(0, 8)}…</p>
-              <div className="tl-esc-actions">
-                <button
-                  className="tl-btn"
-                  disabled={busyReviewId === p.dispute_id}
-                  onClick={() => handleReview(p.dispute_id, "confirmed_correct")}
-                >
-                  Confirm correct
-                </button>
-                <button
-                  className="tl-btn danger"
-                  disabled={busyReviewId === p.dispute_id}
-                  onClick={() => handleReview(p.dispute_id, "overturned")}
-                >
-                  Mark overturned
-                </button>
+              <div className="tl-stat">
+                <dt>On auto-execute</dt>
+                <dd className="tl-num">
+                  {stats.auto}
+                  <span className="tl-dim">/5</span>
+                </dd>
               </div>
+              <div className="tl-stat">
+                <dt>Awaiting humans</dt>
+                <dd className="tl-num">{stats.pending}</dd>
+              </div>
+              <div className="tl-stat">
+                <dt>Fleet accuracy</dt>
+                <dd className="tl-num">{stats.accuracy}</dd>
+              </div>
+            </dl>
+          )}
+        </section>
+
+        {loadError && (
+          <div className="tl-error anim-pop" role="alert">
+            <div>
+              <strong>Backend unreachable.</strong> {loadError}
             </div>
-          ))}
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => {
+                setLoadError(null);
+                refetch().catch((e: unknown) => setLoadError(errorText(e)));
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        <section id="ledger" aria-labelledby="ledger-h" className="tl-anchor">
+          <Reveal>
+            <div className="tl-section-head">
+              <h2 id="ledger-h">The autonomy ledger</h2>
+              <p>Five categories, five balances of trust. Accuracy promotes; overturns demote.</p>
+            </div>
+          </Reveal>
+          {!ledgers ? (
+            <LedgerSkeletons />
+          ) : (
+            <div className="tl-grid">
+              {CATEGORIES.map((cat, i) => {
+                const rec = ledgers.find((l) => l.category === cat);
+                if (!rec) return null;
+                return (
+                  <LedgerCard
+                    key={cat}
+                    record={rec}
+                    index={i}
+                    flashing={flashCat === cat}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <div className="tl-ops" id="desk">
+          <Reveal>
+            <section className="tl-panel" aria-labelledby="ingest-h">
+              <div className="tl-section-head">
+                <h2 id="ingest-h">Intake desk</h2>
+                <p>File a synthetic dispute through the full pipeline.</p>
+              </div>
+              <div className="tl-ingest-row">
+                <select
+                  className="field"
+                  value={ingestCat}
+                  onChange={(e) => setIngestCat(e.target.value as DisputeCategory | "random")}
+                  aria-label="Dispute category"
+                >
+                  <option value="random">Random category</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={`btn btn-primary${ingestPhase === "done" ? " is-done" : ""}`}
+                  onClick={handleIngest}
+                  disabled={ingestPhase !== "idle"}
+                >
+                  {ingestPhase === "working" ? (
+                    <>
+                      <span className="tl-spinner" aria-hidden="true" /> Clearing…
+                    </>
+                  ) : ingestPhase === "done" ? (
+                    "✓ Filed"
+                  ) : (
+                    "File dispute"
+                  )}
+                </button>
+              </div>
+              <p className="tl-hint">
+                Roughly one draw in twenty exceeds ₹50,000 and trips the{" "}
+                <em>stakes override</em> — file until one lands to watch the
+                safety rail fire.
+              </p>
+            </section>
+          </Reveal>
+
+          <Reveal delay={90}>
+            <section className="tl-panel" aria-labelledby="queue-h">
+              <div className="tl-section-head tl-section-head-split">
+                <div>
+                  <h2 id="queue-h">Review docket</h2>
+                  <p>Confirm or overturn — every verdict moves a tier.</p>
+                </div>
+                <span className="tl-count-badge" aria-label={`${escalations.length} pending`}>
+                  {escalations.length}
+                </span>
+              </div>
+              <EscalationQueue
+                packets={escalations}
+                busyId={busyReviewId}
+                loading={ledgers === null}
+                onReview={handleReview}
+              />
+            </section>
+          </Reveal>
         </div>
+
+        <Reveal>
+          <section className="tl-panel tl-theater-panel" id="theater" aria-labelledby="demo-h">
+            <div className="tl-section-head">
+              <h2 id="demo-h">Replay deck</h2>
+              <p>
+                The centerpiece: a 31-case climb — 15 to <em>draft</em>, 15
+                toward <em>auto</em> — then a seeded overturn that demotes live.
+              </p>
+            </div>
+            <DemoTheater running={demoCat} events={demoLog} onRun={handleDemo} />
+          </section>
+        </Reveal>
+
+        <footer className="tl-footer">
+          <span>
+            TrustLedger · suggest <em>→</em> draft <em>→</em> auto · overturns
+            demote exactly one level
+          </span>
+          <a
+            className="tl-footer-link"
+            href="http://localhost:8000/api/ledger"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Raw ledger JSON ↗
+          </a>
+        </footer>
+      </main>
       )}
 
-      <h2 className="tl-section-title">Run demo sequence (centerpiece)</h2>
-      <div className="tl-row">
-        {CATEGORIES.map((c) => (
-          <button
-            key={c}
-            className="tl-btn"
-            disabled={demoCat !== null}
-            onClick={() => handleDemo(c)}
-            title={`31-step climb-then-fall for ${c}`}
-          >
-            {demoCat === c ? "Running…" : `Demo: ${c}`}
-          </button>
-        ))}
-      </div>
-      {demoLog.length > 0 && (
-        <div className="tl-demo-log" ref={logRef} aria-live="polite">
-          {demoLog.map((e) => {
-            const cls = e.message.includes("promoted")
-              ? "promote"
-              : e.message.includes("demoted")
-                ? "demote"
-                : "info";
-            return (
-              <span key={e.step} className={cls}>
-                [{e.step}/31] {e.message}
-              </span>
-            );
-          })}
-        </div>
-      )}
+      <Toasts toasts={toasts} />
     </div>
   );
 }

@@ -1,0 +1,184 @@
+/* Boot.css — signature entrance: seal draw, kinetic wordmark, light sweep. */
+
+.tl-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--ink-0);
+  overflow: hidden;
+  cursor: pointer;
+  transition: clip-path 0.52s var(--ease-out), opacity 0.52s var(--ease-out);
+  clip-path: inset(0 0 0 0);
+}
+.tl-boot.is-exiting {
+  clip-path: inset(0 0 100% 0);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tl-boot-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(214, 196, 164, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(214, 196, 164, 0.05) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 50%, black 20%, transparent 75%);
+  animation: tl-boot-grid-in 1.6s var(--ease-out) both;
+}
+@keyframes tl-boot-grid-in {
+  from { opacity: 0; transform: scale(1.12); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.tl-boot-glow {
+  position: absolute;
+  width: 70vmin;
+  height: 70vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(227, 168, 60, 0.16), transparent 65%);
+  filter: blur(40px);
+  animation: tl-boot-glow 1.8s var(--ease-out) both;
+}
+@keyframes tl-boot-glow {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.tl-boot-streak {
+  position: absolute;
+  top: -20%;
+  height: 140%;
+  width: 120px;
+  background: linear-gradient(90deg, transparent, rgba(246, 200, 107, 0.09), transparent);
+  transform: skewX(-14deg);
+  animation: tl-boot-streak 1.9s var(--ease-out) both;
+}
+.tl-boot-streak-a { left: 0; animation-delay: 0.6s; }
+.tl-boot-streak-b { left: 0; animation-delay: 1s; width: 60px; }
+@keyframes tl-boot-streak {
+  from { left: -15%; opacity: 0; }
+  15% { opacity: 1; }
+  to { left: 110%; opacity: 0; }
+}
+
+.tl-boot-core {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.tl-seal { width: 104px; height: 104px; margin-bottom: 26px; overflow: visible; }
+.tl-seal-ring {
+  stroke-dasharray: 264;
+  stroke-dashoffset: 264;
+  animation: tl-seal-draw 1.1s var(--ease-out) 0.1s forwards;
+  filter: drop-shadow(0 0 10px rgba(227, 168, 60, 0.55));
+}
+.tl-seal-ring-inner {
+  stroke-dasharray: 214;
+  stroke-dashoffset: 214;
+  animation: tl-seal-draw 1s var(--ease-out) 0.3s forwards;
+}
+.tl-seal-ledger {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: tl-seal-draw 0.7s var(--ease-out) 0.9s forwards;
+}
+.tl-seal-check {
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: tl-seal-draw 0.45s var(--ease-out) 1.5s forwards;
+  filter: drop-shadow(0 0 6px rgba(95, 227, 165, 0.8));
+}
+@keyframes tl-seal-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+.tl-boot-word {
+  margin: 0;
+  display: flex;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 6.4vw, 54px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-1);
+}
+.tl-boot-word span {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(9px);
+  transform: translateY(16px);
+  animation: tl-boot-letter 0.55s var(--ease-out) forwards;
+}
+@keyframes tl-boot-letter {
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+
+.tl-boot-rule {
+  width: 0;
+  height: 1px;
+  margin: 20px 0 14px;
+  background: linear-gradient(90deg, transparent, var(--aurum), transparent);
+  animation: tl-boot-rule 0.9s var(--ease-out) 2s forwards;
+}
+@keyframes tl-boot-rule {
+  to { width: min(320px, 60vw); }
+}
+
+.tl-boot-tag {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(15px, 2.6vw, 19px);
+  color: var(--text-3);
+  opacity: 0;
+  animation: tl-boot-fade 0.7s var(--ease-out) 2.2s forwards;
+}
+@keyframes tl-boot-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tl-boot-meter {
+  position: absolute;
+  bottom: 64px;
+  width: min(300px, 56vw);
+  height: 2px;
+  background: rgba(214, 196, 164, 0.14);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tl-boot-meter-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--aurum-deep), var(--aurum-hi));
+  transform-origin: left;
+  animation: tl-boot-meter 2.7s var(--ease-out) 0.15s both;
+}
+@keyframes tl-boot-meter {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.tl-boot-hint {
+  position: absolute;
+  bottom: 30px;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-4);
+  opacity: 0;
+  animation: tl-boot-fade 0.6s ease 2.1s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-boot { transition-duration: 0.25s; }
+  .tl-boot-word span, .tl-boot-tag, .tl-boot-hint { animation-duration: 0.2s; animation-delay: 0s; }
+}

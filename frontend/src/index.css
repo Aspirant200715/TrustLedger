@@ -1,16 +1,63 @@
-/* index.css — minimal dark base (TrustLedger brand). Component styles live in pages/Dashboard.css. */
+/* index.css — base layer: reset, backdrop grain, scrollbar, focus, reduced motion. */
+@import "./theme.css";
+
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
-  background: #0a1128;
-  color: #f2f5ff;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--ink-0);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
 }
 
 #root {
   min-height: 100vh;
+}
+
+::selection {
+  background: rgba(227, 168, 60, 0.35);
+  color: #fff;
+}
+
+.tl-scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(214, 196, 164, 0.3) transparent;
+}
+.tl-scrollable::-webkit-scrollbar { width: 8px; height: 8px; }
+.tl-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(214, 196, 164, 0.28);
+  border-radius: 8px;
+}
+.tl-scrollable::-webkit-scrollbar-track { background: transparent; }
+
+:focus-visible {
+  outline: 2px solid var(--aurum);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .tl-reveal { opacity: 1; transform: none; }
 }
