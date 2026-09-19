@@ -129,19 +129,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
+    let timer: number | null = null;
+    // Sequential polling: wait for each cycle to finish before scheduling the
+    // next. Prevents request stacking when the backend is slow/unreachable and
+    // lets the page reach network-idle between cycles.
+    const tick = async () => {
       try {
         await refetch();
         if (!cancelled) setLoadError(null);
       } catch (err) {
         if (!cancelled) setLoadError(errorText(err));
+      } finally {
+        if (!cancelled) timer = window.setTimeout(() => void tick(), POLL_MS);
       }
     };
-    void load();
-    const id = window.setInterval(() => void load(), POLL_MS);
+    void tick();
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      if (timer !== null) window.clearTimeout(timer);
     };
   }, [refetch]);
 

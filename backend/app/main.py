@@ -7,9 +7,12 @@ import json
 
 app = FastAPI()
 
+# Allow the local demo frontend on any localhost port (Vite may pick 5173,
+# 3000, or a fallback port). A regex keeps credentials working, which a
+# wildcard origin cannot do alongside allow_credentials=True.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

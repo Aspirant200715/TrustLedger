@@ -33,11 +33,28 @@ export class ApiError extends Error {
   }
 }
 
+// Requests can't hang forever: if the backend is slow or unreachable, abort
+// after this budget so the UI (and any preview waiting on networkidle) settles
+// and the caller sees a clean ApiError instead of a stuck promise.
+const REQUEST_TIMEOUT_MS = 7000;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    const timedOut = err instanceof DOMException && err.name === "TimeoutError";
+    throw new ApiError(0, {
+      error: timedOut ? "Timeout" : "NetworkError",
+      detail: timedOut
+        ? `Backend did not respond within ${REQUEST_TIMEOUT_MS / 1000}s on ${path}`
+        : `Cannot reach backend at ${API_BASE_URL} — is it running?`,
+    });
+  }
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const shape = (body ?? {}) as Partial<ApiErrorShape>;
