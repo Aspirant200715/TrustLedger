@@ -300,16 +300,27 @@ export default function Dashboard() {
               >
                 {view === "dashboard" && (
                   <>
-                    <section className="tl-dash-hero">
-                      <p className="tl-kicker">Dispute resolution governance</p>
-                      <h1 className="tl-display">Autonomy ledger overview</h1>
-                      <p className="tl-lede">
-                        Each dispute category holds an independent autonomy
-                        record. Confirmed outcomes advance a category toward
-                        auto-execution; a single overturned outcome demotes it
-                        by one level. Disputes above ₹50,000 are routed to human
-                        review without exception.
-                      </p>
+                    <section className="tl-hero-card">
+                      <span className="tl-hero-orb tl-hero-orb-1" aria-hidden="true" />
+                      <span className="tl-hero-orb tl-hero-orb-2" aria-hidden="true" />
+                      <div className="tl-hero-content">
+                        <p className="tl-kicker">Dispute resolution governance</p>
+                        <h1 className="tl-display">Autonomy ledger overview</h1>
+                        <p className="tl-lede">
+                          Each dispute category holds an independent autonomy
+                          record. Confirmed outcomes advance a category toward
+                          auto-execution; a single overturned outcome demotes it
+                          by one level. Disputes above ₹50,000 are routed to human
+                          review without exception.
+                        </p>
+                      </div>
+                      <div className="tl-hero-badge" aria-hidden="true">
+                        <svg className="tl-hero-seal" viewBox="0 0 96 96" fill="none">
+                          <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="7" />
+                          <path d="M34 42h28M34 54h28" stroke="currentColor" strokeWidth="7" strokeLinecap="round" />
+                          <path d="M40 66l8 8 12-14" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
                     </section>
 
                     {topStats && (

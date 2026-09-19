@@ -147,9 +147,9 @@
 .tl-boot-word {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 38px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
   color: #ffffff;
   text-shadow: 0 2px 24px rgba(2, 6, 23, 0.35);
   animation: tl-fade-in 360ms var(--ease-out) 160ms both;

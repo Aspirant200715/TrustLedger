@@ -74,20 +74,24 @@
 
   /* ——— Typography ——— */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-sans);
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* ——— Shape & elevation ——— */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-xl: 24px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
   --r-pill: 999px;
   --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.05);
   --shadow-card: 0 2px 8px 0 rgb(15 23 42 / 0.06), 0 1px 3px -1px rgb(15 23 42 / 0.05);
   --shadow-pop: 0 20px 48px -20px rgb(15 23 42 / 0.22);
   --shadow-lift: 0 18px 36px -16px rgb(15 23 42 / 0.2), 0 4px 12px -4px rgb(15 23 42 / 0.08);
-  --shadow-btn: 0 2px 8px 0 rgb(37 99 235 / 0.28), 0 1px 3px 0 rgb(37 99 235 / 0.15);
+  --shadow-btn: 0 6px 18px -6px rgb(17 24 39 / 0.45), 0 1px 3px 0 rgb(17 24 39 / 0.2);
+
+  /* ——— Editorial accents ——— */
+  --ink-dark: #111827;       /* dark pill CTAs (reference signature) */
+  --grad-hero: linear-gradient(135deg, #dfebf6 0%, #c9dcef 55%, #bcd4ea 100%);
 
   /* ——— Motion: fast and linear ——— */
   --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -123,15 +127,15 @@
 .btn:active:not(:disabled) { transform: translateY(0); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Primary action — gradient blue pill */
+/* Primary action — dark pill (editorial signature, like the reference CTA) */
 .btn-primary {
-  background: var(--primary-gradient);
-  border-color: transparent;
-  color: var(--primary-contrast);
+  background: var(--ink-dark);
+  border-color: var(--ink-dark);
+  color: #ffffff;
   box-shadow: var(--shadow-btn);
   font-weight: 650;
 }
-.btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #1d4ed8, #2563eb); box-shadow: 0 4px 14px 0 rgb(37 99 235 / 0.4), 0 1px 4px 0 rgb(37 99 235 / 0.2); }
+.btn-primary:hover:not(:disabled) { background: #000000; border-color: #000000; }
 
 /* Confirm — outline blue */
 .btn-blue-outline {
@@ -348,3 +352,8 @@ textarea.field { padding-block: 10px; line-height: 1.5; resize: vertical; }
 .dark .tl-stat[data-tier="suggest_only"] { border-left-color: #94a3b8; }
 .dark .tl-stat[data-tier="draft_for_approval"] { border-left-color: #f59e0b; }
 .dark .tl-stat[data-tier="auto_execute"] { border-left-color: #10b981; }
+
+.dark .tl-hero-card { background: linear-gradient(135deg, #16233f, #1c3c6e); border-color: rgba(148, 163, 184, 0.16); }
+.dark .tl-hero-orb-1 { background: rgba(96, 165, 250, 0.22); }
+.dark .tl-hero-orb-2 { background: rgba(45, 212, 191, 0.13); }
+.dark .tl-hero-badge { background: rgba(30, 58, 138, 0.6); border-color: rgba(96, 165, 250, 0.4); color: #93c5fd; }
