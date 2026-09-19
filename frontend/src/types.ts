@@ -127,12 +127,23 @@ export interface MergedDispute extends Dispute {
   reviewed_at?: string;
   escalation_fallback?: boolean;
   escalation_reason?: EscalationReason;
+  llm_fallback?: boolean;
+  fallback_reason?: "LLM_UNAVAILABLE";
 }
 
 // ─── API request / response envelopes (CONTRACT.md ## API contract) ───────
 export interface IngestRequest {
   category: DisputeCategory | null;
   seed_overturn?: boolean;
+  amount?: number;
+  utr?: string;
+  ticket_text?: string;
+}
+
+export interface HealthResponse {
+  status: "ok";
+  redis: "available";
+  llm: "configured";
 }
 
 export interface IngestResponse {

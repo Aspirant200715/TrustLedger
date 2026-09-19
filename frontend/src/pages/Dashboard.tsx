@@ -4,9 +4,12 @@
 // choreographs first paint; Sidebar + TopBar frame four console views:
 // Dashboard, Live Pipeline, Escalation Docket, Audit Logs.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
+import { RefreshCw } from "lucide-react";
 import {
   ApiError,
+  getHealth,
   getLedger,
   ingestDispute,
   listDisputes,
@@ -17,14 +20,12 @@ import {
 import type {
   DemoEvent,
   DisputeCategory,
-  EscalationPacket,
-  LedgerRecord,
-  MergedDispute,
 } from "../types";
 import { TIER_LABEL, inr } from "../format";
 import AuditLog from "../components/AuditLog";
 import Boot from "../components/Boot";
 import DemoTheater from "../components/DemoTheater";
+import DisputeIngestForm from "../components/DisputeIngestForm";
 import EscalationQueue, { type EscalationRow } from "../components/EscalationQueue";
 import LedgerCard, { type OutcomeDot } from "../components/LedgerCard";
 import Pipeline from "../components/Pipeline";
@@ -43,7 +44,6 @@ const CATEGORIES: DisputeCategory[] = [
   "fraud_flag",
 ];
 
-const POLL_MS = 3000;
 const DEMO_STEP_DELAY_MS = 320;
 
 type IngestPhase = "idle" | "working" | "done";
@@ -91,10 +91,6 @@ function useOnline(): boolean {
 export default function Dashboard() {
   const [booted, setBooted] = useState(false);
   const [view, setView] = useState<ViewId>("dashboard");
-  const [ledgers, setLedgers] = useState<LedgerRecord[] | null>(null);
-  const [disputes, setDisputes] = useState<MergedDispute[]>([]);
-  const [escalations, setEscalations] = useState<EscalationPacket[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [ingestCat, setIngestCat] = useState<DisputeCategory | "random">("random");
   const [ingestPhase, setIngestPhase] = useState<IngestPhase>("idle");
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -103,6 +99,16 @@ export default function Dashboard() {
   const [demoLog, setDemoLog] = useState<DemoEvent[]>([]);
   const [flashCat, setFlashCat] = useState<DisputeCategory | null>(null);
   const online = useOnline();
+  const queryClient = useQueryClient();
+  const ledgerQuery = useQuery({ queryKey: ["ledger"], queryFn: getLedger, refetchInterval: 3_000 });
+  const disputesQuery = useQuery({ queryKey: ["disputes"], queryFn: listDisputes, refetchInterval: 3_000 });
+  const escalationsQuery = useQuery({ queryKey: ["escalations"], queryFn: listEscalations, refetchInterval: 3_000 });
+  const healthQuery = useQuery({ queryKey: ["health"], queryFn: getHealth, refetchInterval: 15_000 });
+  const ledgers = ledgerQuery.data?.categories ?? null;
+  const disputes = useMemo(() => disputesQuery.data?.disputes ?? [], [disputesQuery.data]);
+  const escalations = useMemo(() => escalationsQuery.data?.escalations ?? [], [escalationsQuery.data]);
+  const firstQueryError = ledgerQuery.error ?? disputesQuery.error ?? escalationsQuery.error ?? healthQuery.error;
+  const loadError = firstQueryError ? errorText(firstQueryError) : null;
 
   const toastId = useRef(0);
   const flashTimer = useRef<number | null>(null);
@@ -117,38 +123,13 @@ export default function Dashboard() {
   }, []);
 
   const refetch = useCallback(async () => {
-    const [ledgerRes, escRes, discRes] = await Promise.all([
-      getLedger(),
-      listEscalations(),
-      listDisputes(),
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["ledger"] }),
+      queryClient.invalidateQueries({ queryKey: ["escalations"] }),
+      queryClient.invalidateQueries({ queryKey: ["disputes"] }),
+      queryClient.invalidateQueries({ queryKey: ["health"] }),
     ]);
-    setLedgers(ledgerRes.categories);
-    setEscalations(escRes.escalations);
-    setDisputes(discRes.disputes);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    let timer: number | null = null;
-    // Sequential polling: wait for each cycle to finish before scheduling the
-    // next. Prevents request stacking when the backend is slow/unreachable and
-    // lets the page reach network-idle between cycles.
-    const tick = async () => {
-      try {
-        await refetch();
-        if (!cancelled) setLoadError(null);
-      } catch (err) {
-        if (!cancelled) setLoadError(errorText(err));
-      } finally {
-        if (!cancelled) timer = window.setTimeout(() => void tick(), POLL_MS);
-      }
-    };
-    void tick();
-    return () => {
-      cancelled = true;
-      if (timer !== null) window.clearTimeout(timer);
-    };
-  }, [refetch]);
+  }, [queryClient]);
 
   useEffect(() => {
     return () => {
@@ -303,10 +284,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   className="btn btn-sm"
-                  onClick={() => {
-                    setLoadError(null);
-                    refetch().catch((e: unknown) => setLoadError(errorText(e)));
-                  }}
+                  onClick={() => void refetch()}
                 >
                   Retry
                 </button>
@@ -377,16 +355,21 @@ export default function Dashboard() {
                       </dl>
                     )}
 
+                    <DisputeIngestForm onNotice={pushToast} />
+
                     <section id="ledger" aria-labelledby="ledger-h" className="tl-anchor">
                       <Reveal>
-                        <div className="tl-section-head">
-                          <h2 id="ledger-h">Category autonomy records</h2>
-                          <p>
-                            Current tier, progress to the next threshold, and
-                            recent outcomes for each of the five dispute
-                            categories. Select a record to view its full tier
-                            history.
-                          </p>
+                        <div className="tl-section-head tl-section-head-split">
+                          <div>
+                            <h2 id="ledger-h">Trust Matrix</h2>
+                            <p>
+                              Current tier, progress and last-ten outcomes for
+                              each governed dispute category.
+                            </p>
+                          </div>
+                          <button className="btn btn-sm" type="button" onClick={() => void refetch()} disabled={ledgerQuery.isFetching}>
+                            <RefreshCw className={ledgerQuery.isFetching ? "tl-spin-icon" : ""} /> Refresh ledger
+                          </button>
                         </div>
                       </Reveal>
                       {!ledgers ? (

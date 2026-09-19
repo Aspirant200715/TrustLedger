@@ -2,7 +2,7 @@
 // Filter chips · mono dispute id + bold INR · reason badge · verdict pair:
 // "Confirm Correct" (emerald outline) and "Overturn" (solid red).
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import type { DisputeCategory, EscalationPacket, EscalationReason } from "../types";
 import { CATEGORY_SHORT, inr } from "../format";
 import "./components.css";
@@ -115,16 +115,19 @@ export default function EscalationQueue({ rows, busyId, loading, onReview }: Pro
           .
         </p>
       ) : (
-        <ol className="tl-docket">
+        <motion.ol className="tl-docket" layout>
+          <AnimatePresence initial={false}>
           {visible.map((r, i) => {
             const busy = busyId === r.packet.dispute_id;
             return (
               <motion.li
                 key={r.packet.dispute_id}
                 className={`tl-docket-row reason-${r.packet.escalation_reason} anim-pop`}
+                layout
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.26, delay: Math.min(i, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ opacity: 0, x: 24, height: 0 }}
+                transition={{ duration: 0.22, delay: Math.min(i, 8) * 0.025, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="tl-docket-left">
                   <p className="tl-docket-id">{r.packet.dispute_id.slice(0, 8)}…</p>
@@ -174,7 +177,8 @@ export default function EscalationQueue({ rows, busyId, loading, onReview }: Pro
               </motion.li>
             );
           })}
-        </ol>
+          </AnimatePresence>
+        </motion.ol>
       )}
     </div>
   );

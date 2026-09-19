@@ -97,7 +97,8 @@ class LedgerRecord(BaseModel):
 
 ## API contract (FastAPI routes, exact paths and response shapes)
 POST /api/disputes/ingest
-  body: { "category": DisputeCategory | null (null = random), "seed_overturn": bool (optional, default false) }
+  body: { "category": DisputeCategory | null (null = random), "seed_overturn": bool (optional, default false), "amount": float (optional), "utr": str (optional), "ticket_text": str (optional) }
+  -> amount + utr + ticket_text must be supplied together with a category for manual ingestion; omitting all three preserves synthetic generation
   -> runs the full pipeline synchronously (investigate -> decide -> act/escalate), returns the merged dispute record as JSON
   -> response: { "dispute": <merged dispute object>, "ledger_after": LedgerRecord }
 
@@ -126,7 +127,8 @@ POST /api/demo/seed
   -> response: { "events": [ list of {step, tier_after, message} in order, for the frontend to replay/animate ] }
 
 All error responses: { "error": str, "detail": str }, appropriate 4xx/5xx status codes. No endpoint should ever
-return a raw Python traceback to the client.
+return a raw Python traceback to the client. LLM provider failures return a successful, persisted human escalation
+with `llm_fallback: true` and `fallback_reason: "LLM_UNAVAILABLE"` on the merged dispute; no action is executed.
 
 ## Non-negotiable engineering rules
 1. The Decision Agent NEVER calls the mock ledger API directly. Only the Action Agent has write access to mock

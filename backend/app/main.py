@@ -2,10 +2,23 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from .redis_client import get_redis
+from .llm_client import validate_api_key
 import redis.asyncio as redis
 import json
+import logging
 
 app = FastAPI()
+logger = logging.getLogger("trustledger")
+
+
+@app.on_event("startup")
+async def validate_runtime_configuration():
+    """TrustLedger uses the configured provider key only; no mock mode."""
+    try:
+        validate_api_key()
+    except RuntimeError:
+        logger.critical("LLM_API_KEY is missing; refusing backend startup")
+        raise
 
 # Allow the local demo frontend on any localhost port (Vite may pick 5173,
 # 3000, or a fallback port). A regex keeps credentials working, which a
@@ -37,7 +50,11 @@ app.include_router(demo_router)
 async def health_check(redis_client: redis.Redis = Depends(get_redis)):
     try:
         await redis_client.ping()
-        return {"status": "ok"}
+        return {
+            "status": "ok",
+            "redis": "available",
+            "llm": "configured",
+        }
     except Exception as e:
         return JSONResponse(
             status_code=503,

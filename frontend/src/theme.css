@@ -21,7 +21,7 @@
   --surface-1: #1e293b;      /* panels, cards */
   --surface-2: #243247;      /* inputs, raised rows */
   --surface-3: #2c3c54;      /* hover */
-  --hairline: rgba(148, 163, 184, 0.16);
+  --hairline: rgba(255, 255, 255, 0.05);
   --hairline-strong: rgba(148, 163, 184, 0.3);
 
   /* ——— Text ——— */
@@ -63,7 +63,7 @@
   /* ——— Typography ——— */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-sans);
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* ——— Shape & elevation ——— */
   --r-sm: 4px;
@@ -101,7 +101,7 @@
     color var(--dur-micro) var(--ease-out);
 }
 .btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--hairline-strong); }
-.btn:active:not(:disabled) { background: var(--surface-2); }
+.btn:active:not(:disabled) { background: var(--surface-2); transform: scale(0.98); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn.is-done { border-color: var(--emerald-line); color: var(--emerald-hi); }
 

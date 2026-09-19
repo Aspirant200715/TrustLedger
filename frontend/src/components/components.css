@@ -27,8 +27,16 @@
 .tl-tier-beam.tier-draft_for_approval { background: var(--amber); }
 .tl-tier-beam.tier-auto_execute { background: var(--emerald); }
 
-.tl-instrument.is-flashing { border-color: var(--emerald-line); }
-.tl-instrument.is-flashing-demote { border-color: var(--danger-line); }
+.tl-instrument.is-flashing { animation: tl-tier-promote 900ms var(--ease-out); }
+.tl-instrument.is-flashing-demote { animation: tl-tier-demote 650ms var(--ease-out); }
+@keyframes tl-tier-promote {
+  0% { border-color: var(--emerald); box-shadow: 0 0 0 0 rgba(16,185,129,.35); }
+  100% { border-color: var(--hairline); box-shadow: 0 0 0 14px rgba(16,185,129,0); }
+}
+@keyframes tl-tier-demote {
+  0% { border-color: var(--danger); box-shadow: 0 0 0 0 rgba(239,68,68,.3); }
+  100% { border-color: var(--hairline); box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+}
 
 .tl-instrument-top {
   display: flex;
@@ -819,6 +827,51 @@
 
 .tl-anchor { scroll-margin-top: 70px; }
 
+/* ———————————————— Manual case intake ———————————————— */
+.tl-ingest-panel { position: relative; overflow: hidden; }
+.tl-ingest-panel::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--emerald); }
+.tl-ingest-form { display: grid; grid-template-columns: 1.15fr .8fr 1fr; gap: 12px; align-items: end; }
+.tl-ingest-form label { display: grid; gap: 6px; color: var(--text-3); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.tl-ingest-form .field { width: 100%; }
+.tl-ingest-ticket { grid-column: 1 / -1; }
+.tl-ingest-ticket textarea { min-height: 86px; padding-block: 10px; resize: vertical; line-height: 1.5; }
+.tl-ingest-submit { justify-self: start; grid-column: 1 / -1; min-width: 180px; }
+.tl-money-field { position: relative; }
+.tl-money-field b { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-family: var(--font-mono); z-index: 1; }
+.tl-money-field input { padding-left: 28px; font-family: var(--font-mono); }
+.tl-spin-icon { width: 15px; height: 15px; animation: tl-spin .75s linear infinite; }
+.tl-live-workflow { margin-top: 18px; border-top: 1px solid var(--hairline); padding-top: 16px; }
+.tl-workflow-steps { display: grid; grid-template-columns: repeat(5,1fr); list-style: none; margin: 0 0 16px; padding: 0; }
+.tl-workflow-steps li { display: flex; align-items: center; gap: 7px; color: var(--text-4); font-size: 11px; position: relative; }
+.tl-workflow-steps li:not(:last-child)::after { content: ""; height: 1px; background: var(--hairline-strong); flex: 1; margin-right: 8px; }
+.tl-workflow-steps li > span { width: 22px; height: 22px; border: 1px solid var(--hairline-strong); border-radius: 50%; display: grid; place-items: center; font: 600 10px var(--font-mono); flex: none; }
+.tl-workflow-steps svg { width: 12px; height: 12px; }
+.tl-workflow-steps li.is-active { color: var(--amber-hi); }
+.tl-workflow-steps li.is-active > span { border-color: var(--amber); background: var(--amber-soft); }
+.tl-workflow-steps li.is-done { color: var(--text-2); }
+.tl-workflow-steps li.is-done > span { border-color: var(--emerald); background: var(--emerald-soft); color: var(--emerald-hi); }
+.tl-decision-result { border: 1px solid var(--emerald-line); border-radius: var(--r-md); background: rgba(16,185,129,.035); overflow: hidden; }
+.tl-decision-result.is-warning { border-color: var(--amber-line); background: rgba(245,158,11,.035); }
+.tl-result-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; padding: 14px; border-bottom: 1px solid var(--hairline); }
+.tl-result-head small { color: var(--text-4); }
+.tl-result-head code { font-family: var(--font-mono); color: var(--text-3); overflow-wrap: anywhere; }
+.tl-result-head h3 { margin: 5px 0 0; font-size: 16px; text-transform: capitalize; }
+.tl-ai-warning { display: flex; align-items: center; gap: 8px; margin: 0; padding: 11px 14px; color: var(--amber-hi); border-bottom: 1px solid var(--amber-line); font-size: 12px; }
+.tl-ai-warning svg { width: 16px; }
+.tl-result-grid { display: grid; grid-template-columns: .7fr .8fr 2fr; margin: 0; padding: 14px; gap: 18px; }
+.tl-result-grid dt { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-4); margin-bottom: 4px; }
+.tl-result-grid dd { margin: 0; color: var(--text-2); font-size: 12px; line-height: 1.5; }
+.tl-result-grid div:first-child dd, .tl-result-grid div:nth-child(2) dd { font-family: var(--font-mono); }
+.tl-evidence-toggle { width: 100%; border: 0; border-top: 1px solid var(--hairline); background: rgba(255,255,255,.02); color: var(--text-2); display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; font: 600 11px var(--font-sans); }
+.tl-evidence-toggle span { margin-left: auto; color: var(--text-4); font-weight: 400; }
+.tl-evidence-toggle svg { width: 14px; transition: transform var(--dur-med); }
+.tl-evidence-toggle svg.is-open { transform: rotate(180deg); }
+.tl-evidence-json { margin: 0; padding: 14px; max-height: 360px; overflow: auto; background: rgba(2,6,23,.55); color: var(--text-3); font: 11px/1.6 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tl-docket-row .tl-docket-sub { opacity: .62; transition: opacity var(--dur-micro); }
+.tl-docket-row:hover .tl-docket-sub, .tl-docket-row:focus-within .tl-docket-sub { opacity: 1; }
+.tl-boot { backdrop-filter: blur(10px); }
+.tl-boot-tag { animation: tl-fade-in 500ms var(--ease-out) 320ms both; }
+
 /* ———————————————— Responsive ———————————————— */
 @media (max-width: 860px) {
   .tl-audit-head { display: none; }
@@ -826,6 +879,13 @@
   .tl-audit-amount { text-align: left; }
 }
 @media (max-width: 640px) {
+  .tl-ingest-form { grid-template-columns: 1fr; }
+  .tl-ingest-ticket, .tl-ingest-submit { grid-column: 1; }
+  .tl-ingest-submit { width: 100%; }
+  .tl-workflow-steps { grid-template-columns: 1fr; gap: 7px; }
+  .tl-workflow-steps li::after { display: none; }
+  .tl-result-grid { grid-template-columns: 1fr; }
+  .tl-result-head { flex-direction: column; }
   .tl-docket-row { flex-wrap: wrap; }
   .tl-docket-left { min-width: 0; flex: 1; }
   .tl-docket-verdict { width: 100%; }

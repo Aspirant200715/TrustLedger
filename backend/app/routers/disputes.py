@@ -10,13 +10,14 @@ this module handles Redis I/O, request parsing, and error envelopes.
 All error responses are {error, detail}, never raw tracebacks.
 """
 import json
+import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
-from ..models import DisputeCategory, ReviewOutcome
+from ..models import Dispute, DisputeCategory, DisputeStatus, ReviewOutcome
 from ..ledger_service import apply_transition, get_or_create_ledger, get_all_ledgers
 from ..orchestrator import run_pipeline
 from ..redis_client import get_redis
@@ -27,8 +28,33 @@ router = APIRouter(prefix="/api", tags=["disputes"])
 
 # ─── Request models (exact CONTRACT.md shapes) ─────────────────────
 class IngestRequest(BaseModel):
-    category: DisputeCategory | None = None  # null = random
+    category: DisputeCategory | None = None  # null = random synthetic dispute
     seed_overturn: bool = False
+    amount: float | None = Field(default=None, gt=0, le=10_000_000)
+    utr: str | None = Field(default=None, min_length=4, max_length=64)
+    ticket_text: str | None = Field(default=None, min_length=10, max_length=4000)
+
+    @model_validator(mode="after")
+    def validate_manual_payload(self):
+        values = (self.amount, self.utr, self.ticket_text)
+        supplied = [value is not None for value in values]
+        if any(supplied) and not all(supplied):
+            raise ValueError("amount, utr and ticket_text must be supplied together")
+        if all(supplied) and self.category is None:
+            raise ValueError("category is required for manual ingestion")
+        if self.utr is not None:
+            self.utr = self.utr.strip()
+            if len(self.utr) < 4:
+                raise ValueError("utr must contain at least 4 non-space characters")
+        if self.ticket_text is not None:
+            self.ticket_text = self.ticket_text.strip()
+            if len(self.ticket_text) < 10:
+                raise ValueError("ticket_text must contain at least 10 non-space characters")
+        return self
+
+    @property
+    def is_manual(self) -> bool:
+        return self.amount is not None
 
 
 class ReviewRequest(BaseModel):
@@ -44,7 +70,39 @@ def _err(status: int, error: str, detail: str) -> JSONResponse:
 async def ingest_dispute(req: IngestRequest):
     """Run full pipeline synchronously; never 500s (orchestrator fallback)."""
     try:
-        result = await run_pipeline(category=req.category, seed_overturn=req.seed_overturn)
+        manual_dispute = None
+        manual_evidence = None
+        if req.is_manual:
+            now = datetime.now(timezone.utc)
+            suffix = uuid.uuid4().hex[:10].upper()
+            manual_dispute = Dispute(
+                id=str(uuid.uuid4()),
+                category=req.category,
+                amount=req.amount,
+                utr=req.utr,
+                txn_timestamp=now,
+                customer_id=f"USER_{suffix}",
+                merchant_id=f"MANUAL_{suffix}",
+                raw_ticket_text=req.ticket_text,
+                status=DisputeStatus.ingested,
+            )
+            # Manual reports do not invent investigation facts. These fields
+            # seed the existing evidence tools with only user-supplied data.
+            manual_evidence = {
+                "customer_id": manual_dispute.customer_id,
+                "merchant_id": manual_dispute.merchant_id,
+                "utr": manual_dispute.utr,
+                "amount": manual_dispute.amount,
+                "txn_timestamp": now.isoformat(),
+                "source": "manual_user_input",
+            }
+
+        result = await run_pipeline(
+            category=req.category,
+            seed_overturn=req.seed_overturn,
+            prepared_dispute=manual_dispute,
+            prepared_ground_truth=manual_evidence,
+        )
         if isinstance(result, dict) and "dispute" in result and "ledger_after" in result:
             return {"dispute": result["dispute"], "ledger_after": result["ledger_after"]}
         return _err(500, "PipelineError", "orchestrator returned unexpected shape")

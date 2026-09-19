@@ -64,7 +64,7 @@ export default function Boot({ onDone }: { onDone: () => void }) {
         </svg>
 
         <p className="tl-boot-word">TrustLedger</p>
-        <p className="tl-boot-tag">Dispute Autonomy Console</p>
+        <p className="tl-boot-tag">Autonomy, Earned.</p>
 
         <div className="tl-boot-meter">
           <div className="tl-boot-meter-fill" />

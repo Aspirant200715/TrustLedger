@@ -10,6 +10,8 @@ import type {
   ApiErrorShape,
   DisputeCategory,
   EscalationsResponse,
+  HealthResponse,
+  IngestRequest,
   IngestResponse,
   LedgerResponse,
   ListDisputesResponse,
@@ -70,16 +72,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 /** POST /api/disputes/ingest — run full pipeline, return merged record + ledger. */
 export function ingestDispute(
-  category?: DisputeCategory | null,
+  categoryOrRequest?: DisputeCategory | IngestRequest | null,
   seedOverturn = false,
 ): Promise<IngestResponse> {
+  const body: IngestRequest =
+    typeof categoryOrRequest === "object" && categoryOrRequest !== null
+      ? categoryOrRequest
+      : { category: categoryOrRequest ?? null, seed_overturn: seedOverturn };
   return request<IngestResponse>("/disputes/ingest", {
     method: "POST",
-    body: JSON.stringify({
-      category: category ?? null,
-      seed_overturn: seedOverturn,
-    }),
+    body: JSON.stringify(body),
   });
+}
+
+export function getHealth(): Promise<HealthResponse> {
+  return request<HealthResponse>("/health");
 }
 
 /** GET /api/disputes — list summaries, newest first. */
