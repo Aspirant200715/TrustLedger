@@ -1,18 +1,23 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// The dev/preview servers must bind on all interfaces so the hosted preview
-// can proxy them; the default 127.0.0.1 binding is unreachable from outside
-// the container. `allowedHosts: true` permits the preview's generated
-// hostname, which is not known ahead of time.
-//
-// `/api` is proxied to the FastAPI backend so the browser always talks to its
-// own origin. This keeps the app working behind any host name and means the
-// frontend never needs an absolute backend URL (or CORS) in the browser.
+const here = path.dirname(fileURLToPath(import.meta.url))
+const projectRoot = path.resolve(here, '..')
 const API_TARGET = 'http://127.0.0.1:8000'
 
+// Enter's preview launcher expects a conventional root-level Vite app and a
+// root `dist/` artifact. Source code remains organised under frontend/src;
+// the root index.html imports that entry directly.
 export default defineConfig({
+  root: projectRoot,
+  publicDir: path.resolve(here, 'public'),
   plugins: [react()],
+  build: {
+    outDir: path.resolve(projectRoot, 'dist'),
+    emptyOutDir: true,
+  },
   server: {
     host: true,
     port: 3000,
