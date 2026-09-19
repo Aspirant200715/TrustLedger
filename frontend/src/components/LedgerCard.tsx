@@ -111,6 +111,7 @@ export default function LedgerCard({ record, outcomes, flashing, index }: Props)
     <article
       className={`tl-stat anim-rise${flashing ? (lastDemoted ? " is-flashing-demote" : " is-flashing") : ""}${open ? " is-open" : ""}`}
       style={{ animationDelay: `${Math.min(index, 6) * 70}ms` }}
+      data-tier={record.current_tier}
       aria-label={`${CATEGORY_LABEL[record.category]}, tier ${TIER_LABEL[record.current_tier]}`}
     >
       <div className="tl-stat-head">

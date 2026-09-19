@@ -3,7 +3,7 @@
 .tl-dash-hero { max-width: 780px; }
 .tl-dash-section { display: flex; flex-direction: column; gap: 28px; }
 
-/* KPI stat cards */
+/* KPI stat cards — Paytm-style coloured card accents */
 .tl-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -12,41 +12,54 @@
 .tl-kpi {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
   background: var(--surface-1);
   border: 1px solid var(--hairline);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
-  padding: 17px 18px;
+  padding: 20px 20px;
+  position: relative;
+  overflow: hidden;
   transition:
     transform var(--dur-med) var(--ease-out),
-    box-shadow var(--dur-med) var(--ease-out),
-    border-color var(--dur-med) var(--ease-out);
+    box-shadow var(--dur-med) var(--ease-out);
 }
-.tl-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); border-color: var(--hairline-strong); }
+.tl-kpi::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+.tl-kpi:hover { transform: translateY(-3px); box-shadow: var(--shadow-lift); }
 .tl-kpi-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
-.tl-kpi-icon svg { width: 19px; height: 19px; }
-.tl-kpi-icon.blue { background: var(--primary-soft); color: var(--primary); }
-.tl-kpi-icon.emerald { background: var(--emerald-soft); color: var(--emerald-hi); }
-.tl-kpi-icon.amber { background: var(--amber-soft); color: var(--amber-hi); }
-.tl-kpi-icon.red { background: var(--danger-soft); color: var(--danger-hi); }
+.tl-kpi-icon svg { width: 22px; height: 22px; }
+/* Coloured accent tops + icon backgrounds */
+.tl-kpi.accent-blue::before { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+.tl-kpi.accent-emerald::before { background: linear-gradient(90deg, #059669, #10b981); }
+.tl-kpi.accent-amber::before { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.tl-kpi.accent-red::before { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.tl-kpi-icon.blue { background: var(--grad-blue); color: var(--primary); }
+.tl-kpi-icon.emerald { background: var(--grad-emerald); color: var(--emerald-hi); }
+.tl-kpi-icon.amber { background: var(--grad-amber); color: var(--amber-hi); }
+.tl-kpi-icon.red { background: var(--grad-red); color: var(--danger-hi); }
 .tl-kpi-num {
   margin: 0;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--text-1);
-  line-height: 1.1;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
-.tl-kpi-label { margin: 3px 0 0; font-size: 11.5px; color: var(--text-3); }
+.tl-kpi-label { margin: 4px 0 0; font-size: 12px; color: var(--text-3); }
 
 /* Section cards */
 .tl-section-card {

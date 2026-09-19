@@ -60,6 +60,9 @@ export default function Boot({ onDone }: { onDone: () => void }) {
         <p className="tl-boot-status" key={stage}>
           {stage === 0 ? "Establishing Trust Ledger…" : "Verifying Policy Engine…"}
         </p>
+        <div className="tl-boot-bar" aria-hidden="true">
+          <div className="tl-boot-bar-fill" />
+        </div>
       </div>
     </div>
   );

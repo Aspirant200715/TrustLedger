@@ -314,28 +314,28 @@ export default function Dashboard() {
 
                     {topStats && (
                       <div className="tl-kpis" aria-label="Portfolio summary">
-                        <div className="tl-kpi">
+                        <div className="tl-kpi accent-blue">
                           <span className="tl-kpi-icon blue" aria-hidden="true"><Inbox /></span>
                           <div>
                             <p className="tl-kpi-num">{escalations.length}</p>
                             <p className="tl-kpi-label">Pending review · awaiting a human decision</p>
                           </div>
                         </div>
-                        <div className="tl-kpi">
+                        <div className="tl-kpi accent-emerald">
                           <span className="tl-kpi-icon emerald" aria-hidden="true"><ShieldCheck /></span>
                           <div>
                             <p className="tl-kpi-num">{topStats.autoCount}/{topStats.totalCategories}</p>
                             <p className="tl-kpi-label">Categories at auto · {topStats.draftCount} draft · {topStats.suggestCount} suggest only</p>
                           </div>
                         </div>
-                        <div className="tl-kpi">
+                        <div className="tl-kpi accent-red">
                           <span className="tl-kpi-icon red" aria-hidden="true"><RotateCcw /></span>
                           <div>
                             <p className="tl-kpi-num">{topStats.overturned}</p>
                             <p className="tl-kpi-label">Overturned · decisions reversed on review</p>
                           </div>
                         </div>
-                        <div className="tl-kpi">
+                        <div className="tl-kpi accent-amber">
                           <span className="tl-kpi-icon amber" aria-hidden="true"><FileText /></span>
                           <div>
                             <p className="tl-kpi-num">{disputes.length}</p>

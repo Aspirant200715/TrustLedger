@@ -12,13 +12,32 @@
   border: 1px solid var(--hairline);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
-  padding: 18px 18px 16px;
+  padding: 20px 20px 18px;
   overflow: hidden;
   transition:
     transform var(--dur-med) var(--ease-out),
     box-shadow var(--dur-med) var(--ease-out),
     border-color var(--dur-med) var(--ease-out);
 }
+/* Tier-coloured left accent + top accent — bold, fintech-style */
+.tl-stat {
+  border-left-width: 6px;
+  border-left-style: solid;
+  border-left-color: var(--hairline-strong);
+}
+.tl-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 6px;
+  z-index: 1;
+}
+.tl-stat[data-tier="suggest_only"] { border-left-color: #64748b; }
+.tl-stat[data-tier="suggest_only"]::before { background: linear-gradient(90deg, #475569, #64748b); }
+.tl-stat[data-tier="draft_for_approval"] { border-left-color: #d97706; }
+.tl-stat[data-tier="draft_for_approval"]::before { background: linear-gradient(90deg, #b45309, #f59e0b); }
+.tl-stat[data-tier="auto_execute"] { border-left-color: #059669; }
+.tl-stat[data-tier="auto_execute"]::before { background: linear-gradient(90deg, #047857, #10b981); }
 .tl-stat:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lift);
