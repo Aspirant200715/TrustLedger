@@ -5,11 +5,11 @@ import { defineConfig } from 'vite'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(here, '..')
-const API_TARGET = 'http://127.0.0.1:8000'
 
 // Enter's preview launcher expects a conventional root-level Vite app and a
 // root `dist/` artifact. Source code remains organised under frontend/src;
-// the root index.html imports that entry directly.
+// the root index.html imports that entry directly. All backend contact goes
+// through Enter Cloud backend functions (see frontend/src/api.ts).
 export default defineConfig({
   root: projectRoot,
   publicDir: path.resolve(here, 'public'),
@@ -23,17 +23,11 @@ export default defineConfig({
     port: 3000,
     strictPort: false,
     allowedHosts: true,
-    proxy: {
-      '/api': { target: API_TARGET, changeOrigin: true },
-    },
   },
   preview: {
     host: true,
     port: 3000,
     strictPort: false,
     allowedHosts: true,
-    proxy: {
-      '/api': { target: API_TARGET, changeOrigin: true },
-    },
   },
 })

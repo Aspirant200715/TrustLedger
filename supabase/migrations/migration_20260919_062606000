@@ -1,0 +1,50 @@
+-- TrustLedger: governed-autonomy ledger for financial dispute resolution.
+-- New independent module; no existing business tables in this Cloud.
+
+create table if not exists public.trustledger_ledgers (
+  category text primary key,
+  current_tier text not null default 'suggest_only',
+  hard_capped boolean not null default false,
+  lifetime_total integer not null default 0,
+  lifetime_correct integer not null default 0,
+  lifetime_overturned integer not null default 0,
+  in_tier_total integer not null default 0,
+  in_tier_correct integer not null default 0,
+  tier_history jsonb not null default '[]'::jsonb,
+  review_history jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.trustledger_ledgers enable row level security;
+
+create policy "trustledger_ledgers_public_read"
+  on public.trustledger_ledgers for select
+  to anon, authenticated
+  using (true);
+
+create table if not exists public.trustledger_disputes (
+  id text primary key,
+  category text not null,
+  amount numeric not null default 0,
+  utr text not null default '',
+  txn_timestamp timestamptz,
+  customer_id text not null default '',
+  merchant_id text not null default '',
+  raw_ticket_text text not null default '',
+  status text not null default 'ingested',
+  ground_truth jsonb not null default '{}'::jsonb,
+  record jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists trustledger_disputes_status_idx
+  on public.trustledger_disputes(status);
+create index if not exists trustledger_disputes_created_at_idx
+  on public.trustledger_disputes(created_at desc);
+
+alter table public.trustledger_disputes enable row level security;
+
+create policy "trustledger_disputes_public_read"
+  on public.trustledger_disputes for select
+  to anon, authenticated
+  using (true);

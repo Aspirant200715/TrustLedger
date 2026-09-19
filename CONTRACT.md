@@ -1,13 +1,11 @@
 # TrustLedger Contract
 
 ## Tech stack
-- Backend: Python 3.11, FastAPI, Redis (via redis-py, async client), Uvicorn
-- Backend runs on http://localhost:8000, all routes prefixed with /api
-- Frontend: React + Vite + TypeScript, runs on http://localhost:5173
-- CORS: backend must allow origin http://localhost:5173 explicitly
-- LLM calls: isolated behind a single `llm_client.py` module with one function
-  `def get_structured_completion(system_prompt: str, user_prompt: str, response_model: BaseModel) -> BaseModel`
-  so the rest of the code never calls an LLM API directly.
+- Backend: Enter Cloud (managed Postgres + Deno backend function `trustledger-api`, single self-contained router)
+- Tables: `trustledger_ledgers` (one row per category) and `trustledger_disputes` (one row per merged record); both RLS-enabled with public read, all writes flow through the backend function using the service role
+- Frontend: React + Vite + TypeScript; all API contact via `frontend/src/api.ts` → `supabase.functions.invoke("trustledger-api", { action, ... })`; no local server, no CORS
+- LLM: Enter AI capability, model `deepseek/deepseek-v4-flash` (openai_chat_completions protocol, `stream: false`, `response_format: json_object`), called only inside the backend function; token from the managed secret
+- The AI call performs investigation + decision in ONE round trip; the LLM proposes `proposed_action`, policy code determines `final_path`
 
 ## Enums
 DisputeCategory = ["duplicate_charge", "upi_debited_not_credited", "refund_delay", "merchant_settlement_mismatch", "fraud_flag"]
@@ -89,53 +87,54 @@ class LedgerRecord(BaseModel):
     in_tier_correct: int
     tier_history: list[TierHistoryEntry]
 
-## Redis key layout
-- ledger:{category}          -> JSON-serialized LedgerRecord
-- dispute:{dispute_id}       -> JSON-serialized full dispute record (Dispute + InvestigationResult + Decision + ExecutionResult|EscalationPacket, merged)
-- escalation_queue           -> Redis LIST of dispute_ids pending human review
-- dispute_index              -> Redis LIST of all dispute_ids in ingestion order (for GET /api/disputes)
+## Storage layout (Enter Cloud Postgres)
+- `trustledger_ledgers.category` (pk) -> LedgerRecord fields + `review_history jsonb` (sliding last-10 outcomes, stakes excluded)
+- `trustledger_disputes.id` (pk) -> queryable Dispute columns + `record jsonb` (full merged Dispute + InvestigationResult + Decision + ExecutionResult|EscalationPacket) + `ground_truth jsonb` (evidence seed, never exposed)
+- Escalation queue is derived: disputes with `status = 'escalated'`; reviewing sets status to `reviewed`
 
-## API contract (FastAPI routes, exact paths and response shapes)
-POST /api/disputes/ingest
+## API contract (backend function `trustledger-api`, exact request/response shapes)
+All requests: `{ "action": "...", ... }`; all responses are JSON; errors are `{ "error": str, "detail": str }`.
+
+action "ingest"
   body: { "category": DisputeCategory | null (null = random), "seed_overturn": bool (optional, default false), "amount": float (optional), "utr": str (optional), "ticket_text": str (optional) }
   -> amount + utr + ticket_text must be supplied together with a category for manual ingestion; omitting all three preserves synthetic generation
-  -> runs the full pipeline synchronously (investigate -> decide -> act/escalate), returns the merged dispute record as JSON
+  -> runs the full pipeline synchronously (investigate + decide -> act/escalate), returns the merged dispute record as JSON
   -> response: { "dispute": <merged dispute object>, "ledger_after": LedgerRecord }
 
-GET /api/disputes
+action "disputes"
   -> response: { "disputes": [ <merged dispute summary objects, newest first> ] }
+  body with "id" -> response: <full merged dispute record with evidence trail>
 
-GET /api/disputes/{id}
-  -> response: <full merged dispute record with evidence trail>
-
-GET /api/ledger
+action "ledger"
   -> response: { "categories": [ LedgerRecord, ... ] }  (one entry per category, all 5 categories always present even if total_resolved is 0)
 
-POST /api/review/{dispute_id}
-  body: { "outcome": ReviewOutcome }
-  -> applies the tier-transition rules in CONTRACT.md, updates ledger, removes from escalation_queue if present
+action "review"
+  body: { "dispute_id": str, "outcome": ReviewOutcome }
+  -> applies the tier-transition rules in CONTRACT.md, updates ledger, marks the dispute reviewed (drops it from the escalation queue)
   -> response: { "dispute_id": str, "ledger_after": LedgerRecord }
 
-GET /api/escalations
+action "escalations"
   -> response: { "escalations": [ EscalationPacket, ... ] }
 
-POST /api/demo/seed
+action "seed"
   body: { "category": DisputeCategory }
-  -> runs a scripted sequence: ingests 15 disputes in this category (auto-marked correct) to trigger promotion to
-     draft_for_approval, then ingests 15 more (auto-marked correct) to approach auto_execute, then ingests one
-     final dispute and marks it "overturned" via the review endpoint to demonstrate a live demotion.
+  -> runs a scripted sequence: 15 disputes (marked correct) to trigger promotion to draft_for_approval, 15 more (marked
+     correct) to approach auto_execute, then one final overturned dispute to demonstrate a live demotion. No LLM calls.
   -> response: { "events": [ list of {step, tier_after, message} in order, for the frontend to replay/animate ] }
 
+action "health"
+  -> response: { "status": "ok", "redis": "available", "llm": "configured" }
+
 All error responses: { "error": str, "detail": str }, appropriate 4xx/5xx status codes. No endpoint should ever
-return a raw Python traceback to the client. LLM provider failures return a successful, persisted human escalation
+return a raw traceback to the client. AI provider failures return a successful, persisted human escalation
 with `llm_fallback: true` and `fallback_reason: "LLM_UNAVAILABLE"` on the merged dispute; no action is executed.
 
 ## Non-negotiable engineering rules
 1. The Decision Agent NEVER calls the mock ledger API directly. Only the Action Agent has write access to mock
    ledger state. This separation must be visible in the code (different modules/classes).
-2. Every LLM call must request structured JSON output matching a Pydantic model, and the response must be
-   validated against that model before use. If validation fails, retry once, then fall back to escalation
+2. Every LLM call must request structured JSON output matching the expected shape, and the response must be
+   validated before use. If validation fails, retry once, then fall back to escalation
    (never crash the pipeline on a malformed LLM response).
 3. Every state-changing action (execute a refund, promote/demote a tier) must be logged with a timestamp.
-4. No endpoint blocks for more than ~5s in the demo path — if an LLM call is slow, that's acceptable during
-   dev, but the ingest endpoint must have a hard timeout with graceful escalation fallback.
+4. The AI call has a hard timeout with graceful escalation fallback: a slow/failed provider routes the dispute to
+   human review (`llm_fallback: true`) instead of erroring; the frontend budgets 45s for ingestion.

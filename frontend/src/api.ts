@@ -1,11 +1,11 @@
 // api.ts — typed client for the TrustLedger backend (CONTRACT.md ## API contract).
 //
-// One function per endpoint. Requests go to the app's OWN origin under `/api`,
-// which the Vite dev/preview server proxies to the FastAPI backend on
-// http://127.0.0.1:8000 (see vite.config.ts). Using a same-origin relative
-// path means the app works behind any hostname and needs no CORS in the
-// browser. Non-2xx responses throw ApiError carrying the backend's
-// {error, detail} shape.
+// All calls go through the single Enter Cloud backend function
+// (trustledger-api) which routes by { action }. This keeps the published
+// static site live with no local server and no CORS. Failures are normalized
+// to ApiError carrying the backend's {error, detail} shape.
+import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./lib/backendConfig";
 import type {
   ApiErrorShape,
   DisputeCategory,
@@ -21,7 +21,15 @@ import type {
   SeedResponse,
 } from "./types";
 
-export const API_BASE_URL = "/api";
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
+
+const BACKEND_FUNCTION = "trustledger-api";
 
 export class ApiError extends Error {
   error: string;
@@ -38,92 +46,122 @@ export class ApiError extends Error {
 }
 
 // Requests can't hang forever: if the backend is slow or unreachable, abort
-// after this budget so the UI (and any preview waiting on networkidle) settles
-// and the caller sees a clean ApiError instead of a stuck promise.
-const REQUEST_TIMEOUT_MS = 7000;
+// after this budget so the UI settles and the caller sees a clean ApiError.
+const REQUEST_TIMEOUT_MS = 12_000;
+// Ingestion runs the AI pipeline (investigate + decide) — allow headroom for
+// cold-start latency on the managed AI gateway.
+const INGEST_TIMEOUT_MS = 45_000;
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
-      ...init,
-      headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-  } catch (err) {
-    const timedOut = err instanceof DOMException && err.name === "TimeoutError";
-    throw new ApiError(0, {
-      error: timedOut ? "Timeout" : "NetworkError",
-      detail: timedOut
-        ? `Backend did not respond within ${REQUEST_TIMEOUT_MS / 1000}s on ${path}`
-        : `Cannot reach the backend on :8000 — is it running?`,
-    });
-  }
-  const body: unknown = await res.json().catch(() => null);
-  if (!res.ok) {
-    const shape = (body ?? {}) as Partial<ApiErrorShape>;
-    throw new ApiError(res.status, {
-      error: shape.error ?? "RequestFailed",
-      detail: shape.detail ?? `HTTP ${res.status} on ${path}`,
-    });
-  }
-  return body as T;
+function withTimeout<T>(promise: Promise<T>, ms: number, path: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(
+        new ApiError(0, {
+          error: "Timeout",
+          detail: `Backend did not respond within ${ms / 1000}s on ${path}`,
+        }),
+      );
+    }, ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
 }
 
-/** POST /api/disputes/ingest — run full pipeline, return merged record + ledger. */
+async function invoke<T>(body: object, ms: number, path: string): Promise<T> {
+  try {
+    const { data, error } = await withTimeout(
+      supabase.functions.invoke(BACKEND_FUNCTION, {
+        body,
+        headers: { "Content-Type": "application/json" },
+      }),
+      ms,
+      path,
+    );
+    if (error) throw error;
+    return data as T;
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    const anyErr = err as {
+      name?: string;
+      message?: string;
+      status?: number;
+      context?: unknown;
+    };
+    // Backend functions reply with {error, detail} on non-2xx; the client
+    // exposes that body on FunctionsHttpError.context.
+    if (anyErr.context && typeof anyErr.context === "object") {
+      const shape = anyErr.context as Partial<ApiErrorShape>;
+      if (shape.error) {
+        throw new ApiError(anyErr.status ?? 0, {
+          error: shape.error,
+          detail: shape.detail ?? "Backend error",
+        });
+      }
+    }
+    throw new ApiError(anyErr.status ?? 0, {
+      error: anyErr.name ?? "RequestFailed",
+      detail: anyErr.message ?? "Cannot reach the backend",
+    });
+  }
+}
+
+/** POST /disputes/ingest — run full pipeline, return merged record + ledger. */
 export function ingestDispute(
   categoryOrRequest?: DisputeCategory | IngestRequest | null,
   seedOverturn = false,
 ): Promise<IngestResponse> {
-  const body: IngestRequest =
+  const request: IngestRequest =
     typeof categoryOrRequest === "object" && categoryOrRequest !== null
       ? categoryOrRequest
       : { category: categoryOrRequest ?? null, seed_overturn: seedOverturn };
-  return request<IngestResponse>("/disputes/ingest", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  return invoke<IngestResponse>({ action: "ingest", ...request }, INGEST_TIMEOUT_MS, "ingest");
 }
 
 export function getHealth(): Promise<HealthResponse> {
-  return request<HealthResponse>("/health");
+  return invoke<HealthResponse>({ action: "health" }, REQUEST_TIMEOUT_MS, "health");
 }
 
-/** GET /api/disputes — list summaries, newest first. */
+/** GET /disputes — list summaries, newest first. */
 export function listDisputes(): Promise<ListDisputesResponse> {
-  return request<ListDisputesResponse>("/disputes");
+  return invoke<ListDisputesResponse>({ action: "disputes" }, REQUEST_TIMEOUT_MS, "disputes");
 }
 
-/** GET /api/disputes/{id} — full merged record with evidence trail. */
+/** GET /disputes/{id} — full merged record with evidence trail. */
 export function getDispute(id: string): Promise<MergedDispute> {
-  return request<MergedDispute>(`/disputes/${encodeURIComponent(id)}`);
+  return invoke<MergedDispute>({ action: "disputes", id }, REQUEST_TIMEOUT_MS, `disputes/${id}`);
 }
 
-/** GET /api/ledger — all 5 category ledgers. */
+/** GET /ledger — all 5 category ledgers. */
 export function getLedger(): Promise<LedgerResponse> {
-  return request<LedgerResponse>("/ledger");
+  return invoke<LedgerResponse>({ action: "ledger" }, REQUEST_TIMEOUT_MS, "ledger");
 }
 
-/** POST /api/review/{dispute_id} — apply tier-transition rules. */
+/** POST /review/{dispute_id} — apply tier-transition rules. */
 export function reviewDispute(
   id: string,
   outcome: ReviewOutcome,
 ): Promise<ReviewResponse> {
-  return request<ReviewResponse>(`/review/${encodeURIComponent(id)}`, {
-    method: "POST",
-    body: JSON.stringify({ outcome }),
-  });
+  return invoke<ReviewResponse>(
+    { action: "review", dispute_id: id, outcome },
+    REQUEST_TIMEOUT_MS,
+    `review/${id}`,
+  );
 }
 
-/** GET /api/escalations — pending human-review packets. */
+/** GET /escalations — pending human-review packets. */
 export function listEscalations(): Promise<EscalationsResponse> {
-  return request<EscalationsResponse>("/escalations");
+  return invoke<EscalationsResponse>({ action: "escalations" }, REQUEST_TIMEOUT_MS, "escalations");
 }
 
-/** POST /api/demo/seed — 31-step scripted climb-then-fall for animation replay. */
+/** POST /demo/seed — 31-step scripted climb-then-fall for animation replay. */
 export function seedDemo(category: DisputeCategory): Promise<SeedResponse> {
-  return request<SeedResponse>("/demo/seed", {
-    method: "POST",
-    body: JSON.stringify({ category }),
-  });
+  return invoke<SeedResponse>({ action: "seed", category }, INGEST_TIMEOUT_MS, "seed");
 }

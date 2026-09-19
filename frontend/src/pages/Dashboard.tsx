@@ -495,14 +495,7 @@ export default function Dashboard() {
                 approval <em>→</em> auto-execute. A single overturned outcome
                 demotes by one level.
               </span>
-              <a
-                className="tl-footer-link"
-                href="/api/ledger"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Ledger API
-              </a>
+              <span className="tl-footer-link">Live data via Enter Cloud backend</span>
             </footer>
           </main>
         </div>

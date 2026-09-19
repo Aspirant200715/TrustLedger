@@ -3360,7 +3360,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      trustledger_disputes: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          customer_id: string
+          ground_truth: Json
+          id: string
+          merchant_id: string
+          raw_ticket_text: string
+          record: Json
+          status: string
+          txn_timestamp: string | null
+          utr: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          customer_id?: string
+          ground_truth?: Json
+          id: string
+          merchant_id?: string
+          raw_ticket_text?: string
+          record?: Json
+          status?: string
+          txn_timestamp?: string | null
+          utr?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          customer_id?: string
+          ground_truth?: Json
+          id?: string
+          merchant_id?: string
+          raw_ticket_text?: string
+          record?: Json
+          status?: string
+          txn_timestamp?: string | null
+          utr?: string
+        }
+        Relationships: []
+      }
+      trustledger_ledgers: {
+        Row: {
+          category: string
+          current_tier: string
+          hard_capped: boolean
+          in_tier_correct: number
+          in_tier_total: number
+          lifetime_correct: number
+          lifetime_overturned: number
+          lifetime_total: number
+          review_history: Json
+          tier_history: Json
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          current_tier?: string
+          hard_capped?: boolean
+          in_tier_correct?: number
+          in_tier_total?: number
+          lifetime_correct?: number
+          lifetime_overturned?: number
+          lifetime_total?: number
+          review_history?: Json
+          tier_history?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          current_tier?: string
+          hard_capped?: boolean
+          in_tier_correct?: number
+          in_tier_total?: number
+          lifetime_correct?: number
+          lifetime_overturned?: number
+          lifetime_total?: number
+          review_history?: Json
+          tier_history?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
