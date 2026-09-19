@@ -82,7 +82,7 @@ export default function Pipeline({ disputes, loading, ingestCat, ingestPhase, on
       </div>
 
       {loading && disputes.length === 0 ? (
-        <p className="tl-empty">Summoning the pipeline…</p>
+        <p className="tl-empty">Loading pipeline…</p>
       ) : disputes.length === 0 ? (
         <div className="tl-empty-state anim-pop">
           <div className="tl-empty-seal" aria-hidden="true">

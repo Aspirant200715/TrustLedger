@@ -82,7 +82,7 @@ export default function EscalationQueue({ rows, busyId, loading, onReview }: Pro
       )}
 
       {loading && rows.length === 0 ? (
-        <p className="tl-empty">Summoning the docket…</p>
+        <p className="tl-empty">Loading review queue…</p>
       ) : rows.length === 0 ? (
         <div className="tl-empty-state anim-pop">
           <div className="tl-empty-seal" aria-hidden="true">

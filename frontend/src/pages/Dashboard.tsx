@@ -50,19 +50,19 @@ type IngestPhase = "idle" | "working" | "done";
 
 const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
   dashboard: {
-    title: "Trust Ledger Dashboard",
-    subtitle: "Five categories, five balances of trust — accuracy promotes, overturns demote",
+    title: "Autonomy Ledger",
+    subtitle: "Category trust records, review queue and tier simulation",
   },
   pipeline: {
     title: "Live Pipeline",
-    subtitle: "Disputes moving through ingest → investigate → decide → act",
+    subtitle: "Ingestion, investigation, decision and settlement status",
   },
   escalations: {
-    title: "Escalation Docket",
-    subtitle: "Human override desk — every verdict moves a tier",
+    title: "Escalation Queue",
+    subtitle: "Disputes awaiting human review and final determination",
   },
   audit: {
-    title: "Audit Logs",
+    title: "Audit Log",
     subtitle: "Timestamped record of every state-changing action",
   },
 };
@@ -163,6 +163,7 @@ export default function Dashboard() {
     const correct = ledgers.reduce((n, l) => n + l.lifetime_correct, 0);
     return {
       resolved,
+      overturned: ledgers.reduce((n, l) => n + l.lifetime_overturned, 0),
       accuracy: resolved === 0 ? "—" : `${((correct / resolved) * 100).toFixed(1)}%`,
       autoCount: ledgers.filter((l) => l.current_tier === "auto_execute").length,
       draftCount: ledgers.filter((l) => l.current_tier === "draft_for_approval").length,
@@ -237,7 +238,7 @@ export default function Dashboard() {
       if (demoCat !== null) return;
       setDemoCat(category);
       setDemoLog([]);
-      pushToast(`Replaying ${category} — 31 cases, watch its instrument.`);
+      pushToast(`Simulation started for ${category} — processing 31 cases.`);
       try {
         const { events } = await seedDemo(category);
         let prev: string | null = null;
@@ -252,7 +253,7 @@ export default function Dashboard() {
           prev = e.tier_after;
         }
         await refetch();
-        pushToast(`Replay complete — ${category} held its final tier.`);
+        pushToast(`Simulation complete for ${category}.`);
       } catch (err) {
         pushToast(errorText(err), "error");
       } finally {
@@ -267,13 +268,6 @@ export default function Dashboard() {
   return (
     <div className="tl-app">
       {!booted && <Boot onDone={() => setBooted(true)} />}
-
-      <div className="tl-backdrop" aria-hidden="true">
-        <span className="tl-aurora tl-aurora-a" />
-        <span className="tl-aurora tl-aurora-b" />
-        <span className="tl-grid-overlay" />
-        <span className="tl-grain" />
-      </div>
 
       <div className="tl-shell">
         <Sidebar
@@ -293,15 +287,18 @@ export default function Dashboard() {
 
           <main className="tl-main">
             {!online && (
-              <div className="tl-offline anim-pop" role="alert">
-                <strong>You're offline.</strong> Showing the last synced state —
-                actions will fail until the connection returns.
+              <div className="tl-offline" role="alert">
+                <span>
+                  <strong>No network connection.</strong> Displaying the last
+                  synchronised state. Actions will fail until connectivity is
+                  restored.
+                </span>
               </div>
             )}
             {loadError && (
-              <div className="tl-error anim-pop" role="alert">
+              <div className="tl-error" role="alert">
                 <div>
-                  <strong>Backend unreachable.</strong> {loadError}
+                  <strong>Backend unavailable.</strong> {loadError}
                 </div>
                 <button
                   type="button"
@@ -327,29 +324,68 @@ export default function Dashboard() {
               >
                 {view === "dashboard" && (
                   <>
-                    <section className="tl-dash-hero anim-rise">
-                      <p className="tl-kicker">Earned autonomy · real money · human override</p>
-                      <h1 className="tl-display">
-                        Trust, credited.
-                        <br />
-                        <span className="tl-display-accent">Autonomy, earned.</span>
-                      </h1>
+                    <section className="tl-dash-hero">
+                      <p className="tl-kicker">Dispute resolution governance</p>
+                      <h1 className="tl-display">Autonomy ledger overview</h1>
                       <p className="tl-lede">
-                        Each dispute category keeps its own ledger of autonomy.
-                        Correct verdicts promote it toward auto-execution; one
-                        overturn demotes it. Anything over ₹50,000 routes to a
-                        human — always.
+                        Each dispute category holds an independent autonomy
+                        record. Confirmed outcomes advance a category toward
+                        auto-execution; a single overturned outcome demotes it
+                        by one level. Disputes above ₹50,000 are routed to human
+                        review without exception.
                       </p>
                     </section>
+
+                    {topStats && (
+                      <dl className="tl-summary" aria-label="Portfolio summary">
+                        <div className="tl-summary-cell">
+                          <dt>Pending review</dt>
+                          <dd>
+                            {escalations.length}
+                            <span className="tl-summary-sub">
+                              awaiting a human decision
+                            </span>
+                          </dd>
+                        </div>
+                        <div className="tl-summary-cell">
+                          <dt>Categories at auto</dt>
+                          <dd>
+                            {topStats.autoCount}/{topStats.totalCategories}
+                            <span className="tl-summary-sub">
+                              {topStats.draftCount} draft · {topStats.suggestCount} suggest only
+                            </span>
+                          </dd>
+                        </div>
+                        <div className="tl-summary-cell">
+                          <dt>Overturned</dt>
+                          <dd>
+                            {topStats.overturned}
+                            <span className="tl-summary-sub">
+                              decisions reversed on review
+                            </span>
+                          </dd>
+                        </div>
+                        <div className="tl-summary-cell">
+                          <dt>Disputes on record</dt>
+                          <dd>
+                            {disputes.length}
+                            <span className="tl-summary-sub">
+                              persisted pipeline records
+                            </span>
+                          </dd>
+                        </div>
+                      </dl>
+                    )}
 
                     <section id="ledger" aria-labelledby="ledger-h" className="tl-anchor">
                       <Reveal>
                         <div className="tl-section-head">
-                          <h2 id="ledger-h">The autonomy ledger</h2>
+                          <h2 id="ledger-h">Category autonomy records</h2>
                           <p>
-                            Five instruments, five balances of trust. Click any
-                            card to open its tier history — promotions level up,
-                            demotions glitch.
+                            Current tier, progress to the next threshold, and
+                            recent outcomes for each of the five dispute
+                            categories. Select a record to view its full tier
+                            history.
                           </p>
                         </div>
                       </Reveal>
@@ -378,8 +414,11 @@ export default function Dashboard() {
                       <section className="tl-panel" aria-labelledby="queue-h">
                         <div className="tl-section-head tl-section-head-split">
                           <div>
-                            <h2 id="queue-h">Review docket</h2>
-                            <p>Confirm or overturn — every verdict moves a tier.</p>
+                            <h2 id="queue-h">Pending review</h2>
+                            <p>
+                              Each decision updates the category's autonomy
+                              record immediately.
+                            </p>
                           </div>
                           <span className="tl-count-badge" aria-label={`${escalations.length} pending`}>
                             {escalations.length} pending
@@ -395,12 +434,14 @@ export default function Dashboard() {
                     </Reveal>
 
                     <Reveal>
-                      <section className="tl-panel tl-theater-panel" id="theater" aria-labelledby="demo-h">
+                      <section className="tl-panel" id="simulation" aria-labelledby="demo-h">
                         <div className="tl-section-head">
-                          <h2 id="demo-h">Replay deck</h2>
+                          <h2 id="demo-h">Tier progression simulation</h2>
                           <p>
-                            The centerpiece: a 31-case climb — 15 to <em>draft</em>, 15
-                            toward <em>auto</em> — then a seeded overturn that demotes live.
+                            Generates and processes 31 synthetic disputes
+                            through the live pipeline to demonstrate promotion
+                            and demotion behaviour. Results are written to the
+                            backend and reflected in the records above.
                           </p>
                         </div>
                         <DemoTheater running={demoCat} events={demoLog} onRun={handleDemo} />
@@ -415,8 +456,9 @@ export default function Dashboard() {
                       <div className="tl-section-head">
                         <h2 id="pipeline-h">Live pipeline</h2>
                         <p>
-                          Every dispute the agent touches, in flight. Amber rows
-                          are waiting on a human; emerald rows executed.
+                          Disputes currently progressing through ingestion,
+                          investigation, decision and settlement. Rows marked in
+                          amber are awaiting human review.
                         </p>
                       </div>
                       <Pipeline
@@ -466,16 +508,17 @@ export default function Dashboard() {
 
             <footer className="tl-footer">
               <span>
-                TrustLedger · suggest <em>→</em> draft <em>→</em> auto · overturns
-                demote exactly one level
+                TrustLedger — tier progression: suggest only <em>→</em> draft for
+                approval <em>→</em> auto-execute. A single overturned outcome
+                demotes by one level.
               </span>
               <a
                 className="tl-footer-link"
-                href="http://localhost:8000/api/ledger"
+                href="/api/ledger"
                 target="_blank"
                 rel="noreferrer"
               >
-                Raw ledger JSON ↗
+                Ledger API
               </a>
             </footer>
           </main>

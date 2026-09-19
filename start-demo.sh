@@ -30,7 +30,8 @@ PY="$ROOT/backend/venv/bin/python"
 (cd "$ROOT/backend" && "$PY" -m uvicorn app.main:app --reload --port 8000 &)
 
 # 3. Frontend (background) — install deps on first run, prefer pnpm.
-echo "[3/3] Frontend on :5173..."
+# Vite serves on :3000 and proxies /api to the backend on :8000.
+echo "[3/3] Frontend on :3000..."
 if command -v pnpm >/dev/null 2>&1; then
   PKG="pnpm"
 else
@@ -39,5 +40,5 @@ fi
 (cd "$ROOT/frontend" && { [ -d node_modules ] || "$PKG" install; } && "$PKG" run dev &)
 
 sleep 4
-echo "Dashboard: http://localhost:5173  |  Ledger JSON: http://localhost:8000/api/ledger"
+echo "Dashboard: http://localhost:3000  |  Ledger JSON: http://localhost:8000/api/ledger"
 wait

@@ -1,6 +1,6 @@
 // LedgerCard.tsx — one autonomy instrument per dispute category.
 // Tier pill · accuracy gauge · hard-cap lock · 10-outcome micro-trend ·
-// click-to-expand tier_history timeline (promotions level-up, demotions glitch).
+// click-to-expand tier_history timeline of promotions and demotions.
 import { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Lock } from "lucide-react";
@@ -19,28 +19,19 @@ const CIRC = 2 * Math.PI * R;
 
 export type OutcomeDot = "ok" | "overturned" | "pending";
 
-const ROUTE = { "suggest_only": "suggest", "draft_for_approval": "draft", "auto_execute": "auto" } as const;
 
-/** Level-up: bouncy, game-feel promotion. */
+/** Promotion entry — brief, neutral. */
 const promoteVariant = {
-  initial: { opacity: 0, y: 14, scale: 0.92 },
+  initial: { opacity: 0, y: 4 },
   animate: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { type: "spring" as const, stiffness: 400, damping: 24 },
+    transition: { duration: 0.2, ease: [0.2, 0, 0, 1] as const },
   },
 };
 
-/** Glitch: sudden, jittery demotion. */
-const demoteVariant = {
-  initial: { opacity: 0, x: -8 },
-  animate: {
-    opacity: [0, 1, 0.35, 1],
-    x: [0, -4, 4, -2, 0],
-    transition: { duration: 0.4 },
-  },
-};
+/** Demotion entry — same timing; meaning is carried by colour, not motion. */
+const demoteVariant = promoteVariant;
 
 interface Props {
   record: LedgerRecord;
@@ -123,19 +114,19 @@ export default function LedgerCard({ record, outcomes, flashing, index }: Props)
         <div className="tl-gauge-caption">
           <p className="tl-gauge-title">
             {capped
-              ? `Hard-capped at ${ROUTE[record.current_tier]}`
+              ? "Capped at draft for approval"
               : threshold === null
-                ? "Full autonomy"
-                : `In-tier ${record.in_tier_correct} / ${threshold}`}
+                ? "Maximum tier reached"
+                : `${record.in_tier_correct} of ${threshold} in tier`}
           </p>
           <p className="tl-gauge-sub">
             {capped
-              ? "No auto-execute path exists"
+              ? "Auto-execute is not permitted for this category"
               : threshold === null
-                ? "Nothing above this tier"
+                ? "No higher tier available"
                 : record.current_tier === "suggest_only"
-                  ? "15 at ≥90% to draft"
-                  : "30 at ≥97% to auto"}
+                  ? "Requires 15 outcomes at 90% accuracy"
+                  : "Requires 30 outcomes at 97% accuracy"}
           </p>
         </div>
       </div>
@@ -181,8 +172,8 @@ export default function LedgerCard({ record, outcomes, flashing, index }: Props)
       <div className="tl-instrument-expand">
         <span className="tl-instrument-expand-hint">
           {record.tier_history.length > 0
-            ? `${record.tier_history.length} movement${record.tier_history.length === 1 ? "" : "s"} on record`
-            : "No movements yet"}
+            ? `${record.tier_history.length} tier change${record.tier_history.length === 1 ? "" : "s"} recorded`
+            : "No tier changes recorded"}
         </span>
         <button
           type="button"
@@ -210,8 +201,9 @@ export default function LedgerCard({ record, outcomes, flashing, index }: Props)
             <div className="tl-timeline">
               {record.tier_history.length === 0 ? (
                 <p className="tl-tl-empty">
-                  Every category starts at <em>suggest_only</em>. Confirm
-                  verdicts and this instrument will start climbing.
+                  All categories begin at <em>suggest only</em>. Confirmed
+                  review outcomes will advance this record toward a higher
+                  tier.
                 </p>
               ) : (
                 record.tier_history.map((h, i) => {

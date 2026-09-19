@@ -183,7 +183,7 @@ export default function AuditLog({ disputes, ledgers, loading }: Props) {
       </div>
 
       {loading && entries.length === 0 ? (
-        <p className="tl-empty">Unsealing the record…</p>
+        <p className="tl-empty">Loading audit records…</p>
       ) : visible.length === 0 ? (
         <div className="tl-empty-state anim-pop">
           <div className="tl-empty-seal" aria-hidden="true">
@@ -200,6 +200,12 @@ export default function AuditLog({ disputes, ledgers, loading }: Props) {
         </div>
       ) : (
         <div className="tl-audit">
+          <div className="tl-audit-head" aria-hidden="true">
+            <span>Timestamp</span>
+            <span>Event</span>
+            <span>Detail</span>
+            <span>Amount</span>
+          </div>
           {visible.slice(0, 120).map((e, i) => (
             <motion.div
               key={e.id}

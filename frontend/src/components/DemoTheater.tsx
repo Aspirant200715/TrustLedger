@@ -53,7 +53,7 @@ export default function DemoTheater({ running, events, onRun }: Props) {
             className={`btn btn-sm${running === c ? " is-running" : ""}`}
             disabled={running !== null}
             onClick={() => onRun(c)}
-            title={`31-case climb-then-fall for ${c}`}
+            title={`Run 31 synthetic cases through ${c}`}
           >
             <span className="tl-btn-dot" aria-hidden="true" />
             {running === c ? "Replaying…" : c}
@@ -63,11 +63,13 @@ export default function DemoTheater({ running, events, onRun }: Props) {
 
       {events.length === 0 && running === null ? (
         <div className="tl-deck-idle">
-          <p className="tl-deck-idle-rule" aria-hidden="true">15 → 15 → 1</p>
+          <p className="tl-deck-idle-rule" aria-hidden="true">15 / 15 / 1</p>
           <p className="tl-empty">
-            Fifteen cases to <em>draft</em>, fifteen toward <em>auto</em>, then
-            a seeded overturn that demotes on screen. Choose a category to roll
-            the tape.
+            Runs 31 synthetic disputes through the live pipeline for a chosen
+            category: 15 confirmed outcomes to reach <em>draft for approval</em>,
+            15 further confirmations accruing toward <em>auto-execute</em>, then
+            one overturned outcome to demonstrate demotion. All records are
+            written to the backend.
           </p>
         </div>
       ) : (
@@ -117,15 +119,15 @@ export default function DemoTheater({ running, events, onRun }: Props) {
                   <i />
                   <i />
                 </span>
-                <span className="tl-log-msg">clearing the next case…</span>
+                <span className="tl-log-msg">processing next case…</span>
               </div>
             )}
           </div>
           {finished && last && (
-            <p className="tl-deck-finale anim-pop">
-              Tape ends — held at{" "}
-              <strong>{last.tier_after.replaceAll("_", " ")}</strong> after the
-              seeded overturn. The ledger card above agrees.
+            <p className="tl-deck-finale">
+              Run complete — category holds at{" "}
+              <strong>{last.tier_after.replaceAll("_", " ")}</strong> following
+              the final overturned outcome. The ledger card reflects this state.
             </p>
           )}
         </div>

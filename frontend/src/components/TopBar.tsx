@@ -4,6 +4,7 @@ import "./layout.css";
 
 export interface TopStats {
   resolved: number;
+  overturned: number;
   accuracy: string;
   autoCount: number;
   draftCount: number;

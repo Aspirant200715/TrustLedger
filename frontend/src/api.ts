@@ -1,9 +1,11 @@
 // api.ts — typed client for the TrustLedger backend (CONTRACT.md ## API contract).
 //
-// One function per endpoint. The backend runs at http://localhost:8000 (CONTRACT.md
-// "Backend runs on http://localhost:8000, all routes prefixed with /api").
-// No .env file is required — the URL is fixed by contract. Non-2xx responses
-// throw ApiError carrying the backend's {error, detail} shape.
+// One function per endpoint. Requests go to the app's OWN origin under `/api`,
+// which the Vite dev/preview server proxies to the FastAPI backend on
+// http://127.0.0.1:8000 (see vite.config.ts). Using a same-origin relative
+// path means the app works behind any hostname and needs no CORS in the
+// browser. Non-2xx responses throw ApiError carrying the backend's
+// {error, detail} shape.
 import type {
   ApiErrorShape,
   DisputeCategory,
@@ -17,7 +19,7 @@ import type {
   SeedResponse,
 } from "./types";
 
-export const API_BASE_URL = "http://localhost:8000/api";
+export const API_BASE_URL = "/api";
 
 export class ApiError extends Error {
   error: string;
@@ -52,7 +54,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       error: timedOut ? "Timeout" : "NetworkError",
       detail: timedOut
         ? `Backend did not respond within ${REQUEST_TIMEOUT_MS / 1000}s on ${path}`
-        : `Cannot reach backend at ${API_BASE_URL} — is it running?`,
+        : `Cannot reach the backend on :8000 — is it running?`,
     });
   }
   const body: unknown = await res.json().catch(() => null);

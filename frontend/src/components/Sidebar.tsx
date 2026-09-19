@@ -42,7 +42,7 @@ export default function Sidebar({ view, pendingEscalations, onNavigate }: Props)
           <span className="tl-side-name">
             Trust<em>Ledger</em>
           </span>
-          <span className="tl-side-tag">autonomy, earned</span>
+          <span className="tl-side-tag">Autonomy Console</span>
         </span>
       </div>
 
@@ -75,13 +75,12 @@ export default function Sidebar({ view, pendingEscalations, onNavigate }: Props)
       </nav>
 
       <div className="tl-side-foot">
-        <strong>CONTRACT.md</strong>
+        <strong>Governing rules</strong>
+        Suggest only <em>→</em> draft for approval <em>→</em> auto-execute
         <br />
-        suggest <em>→</em> draft <em>→</em> auto
+        One overturned outcome demotes by one level
         <br />
-        overturns demote one level
-        <br />
-        ₹50K+ always routes to a human
+        Disputes above ₹50,000 always require human review
       </div>
     </aside>
   );

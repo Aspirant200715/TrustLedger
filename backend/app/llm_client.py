@@ -6,7 +6,26 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = AsyncGroq(api_key=os.environ.get("LLM_API_KEY"))
+# The Groq client is built lazily on first use. Constructing it at import time
+# would raise GroqError when LLM_API_KEY is unset, which would take down the
+# whole backend (every route, not just LLM ones) before it could serve a
+# request. Deferring means a missing key degrades to the orchestrator's
+# escalation fallback instead of a dead server.
+_client: AsyncGroq | None = None
+
+
+def get_client() -> AsyncGroq:
+    global _client
+    if _client is None:
+        api_key = os.environ.get("LLM_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "LLM_API_KEY is not set — add it to the repo-root .env "
+                "(see .env.example). Disputes will escalate to human review "
+                "until a key is configured."
+            )
+        _client = AsyncGroq(api_key=api_key)
+    return _client
 
 
 def _flatten_schema(schema: dict) -> dict:
@@ -44,7 +63,7 @@ async def get_structured_completion(
     raw_schema = response_model.model_json_schema()
     schema = _flatten_schema(raw_schema)
 
-    response = await client.chat.completions.create(
+    response = await get_client().chat.completions.create(
         model="qwen/qwen3.8-27b",
         messages=[
             {"role": "system", "content": system_prompt},
