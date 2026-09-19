@@ -2,11 +2,26 @@
   "name": "trustledger",
   "private": true,
   "type": "module",
-  "description": "Root bridge — the web app lives in frontend/, the backend in backend/. Enter runs the frontend through this entry point.",
+  "description": "TrustLedger frontend build entry point.",
   "scripts": {
-    "dev": "cd frontend && pnpm dev",
-    "build": "cd frontend && pnpm build",
-    "lint": "cd frontend && pnpm lint",
-    "preview": "cd frontend && pnpm preview"
+    "dev": "vite frontend --config frontend/vite.config.ts",
+    "build": "tsc -b frontend/tsconfig.json && vite build frontend --config frontend/vite.config.ts",
+    "lint": "oxlint frontend/src",
+    "preview": "vite preview frontend --config frontend/vite.config.ts"
+  },
+  "dependencies": {
+    "framer-motion": "^13.4.0",
+    "lucide-react": "^1.47.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
   }
 }
