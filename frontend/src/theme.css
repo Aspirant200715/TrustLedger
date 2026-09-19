@@ -1,80 +1,87 @@
 /* theme.css — TrustLedger design system.
  *
- * Tone: formal institutional software. Reference points are regulated
- * financial consoles and enterprise admin portals, not marketing sites.
- * Rules observed throughout:
- *   - No gradient text, no glow shadows, no decorative motion.
- *   - Colour carries MEANING only (tier/state), never decoration.
- *   - Tabular figures for every number, monospace for identifiers.
- *   - Tight radii, hairline borders, restrained elevation.
+ * Tone: production fintech console (Razorpay / Paytm school). Light off-white
+ * app surface, pure-white cards, deep royal-blue primary actions, semantic
+ * state colours used only to convey meaning, Inter type with tabular figures.
+ * Elevation comes from hairlines + soft layered shadows, never glow.
  *
- * Semantic palette (fixed):
- *   slate   #64748b  suggest_only / metadata / inactive
- *   amber   #f59e0b  draft_for_approval / pending review / caution
- *   emerald #10b981  auto_execute / confirmed correct
- *   red     #ef4444  overturned / demotion (used sparingly)
+ * Semantic palette:
+ *   blue   #2563eb  primary actions / focus / links
+ *   slate  #64748b  suggest_only / metadata / inactive
+ *   amber  #f59e0b  draft_for_approval / pending review / caution
+ *   emerald #10b981 auto_execute / confirmed correct
+ *   red    #ef4444  overturned / demotion (used sparingly)
  */
 
 :root {
   /* ——— Surfaces ——— */
-  --ink-0: #0f172a;          /* page base */
-  --surface-1: #1e293b;      /* panels, cards */
-  --surface-2: #243247;      /* inputs, raised rows */
-  --surface-3: #2c3c54;      /* hover */
-  --hairline: rgba(255, 255, 255, 0.05);
-  --hairline-strong: rgba(148, 163, 184, 0.3);
+  --ink-0: #f8fafc;          /* app background — off-white */
+  --surface-1: #ffffff;      /* cards, panels */
+  --surface-2: #f1f5f9;      /* inputs, raised rows */
+  --surface-3: #e2e8f0;      /* hover */
+  --hairline: rgba(15, 23, 42, 0.06);
+  --hairline-strong: #e2e8f0;
 
   /* ——— Text ——— */
-  --text-1: #f1f5f9;
-  --text-2: #cbd5e1;
-  --text-3: #94a3b8;
-  --text-4: #64748b;
+  --text-1: #0f172a;         /* headings */
+  --text-2: #475569;         /* body */
+  --text-3: #64748b;         /* muted */
+  --text-4: #94a3b8;         /* faint */
+
+  /* ——— Primary ——— */
+  --primary: #2563eb;
+  --primary-hi: #1d4ed8;
+  --primary-soft: rgba(37, 99, 235, 0.09);
+  --primary-line: rgba(37, 99, 235, 0.38);
+  --primary-contrast: #ffffff;
 
   /* ——— Semantic state colours ——— */
   --emerald: #10b981;
-  --emerald-hi: #34d399;
+  --emerald-hi: #059669;
   --emerald-soft: rgba(16, 185, 129, 0.1);
-  --emerald-line: rgba(16, 185, 129, 0.45);
+  --emerald-line: rgba(16, 185, 129, 0.4);
 
   --amber: #f59e0b;
-  --amber-hi: #fbbf24;
-  --amber-soft: rgba(245, 158, 11, 0.1);
+  --amber-hi: #b45309;
+  --amber-soft: rgba(245, 158, 11, 0.12);
   --amber-line: rgba(245, 158, 11, 0.45);
 
   --danger: #ef4444;
-  --danger-hi: #f87171;
-  --danger-soft: rgba(239, 68, 68, 0.1);
-  --danger-line: rgba(239, 68, 68, 0.45);
+  --danger-hi: #dc2626;
+  --danger-soft: rgba(239, 68, 68, 0.08);
+  --danger-line: rgba(239, 68, 68, 0.4);
 
-  --slate-soft: rgba(148, 163, 184, 0.1);
-  --slate-line: rgba(148, 163, 184, 0.4);
+  --slate-soft: rgba(100, 116, 139, 0.08);
+  --slate-line: rgba(100, 116, 139, 0.35);
 
-  /* Tier aliases — used by badges, gauges, rails */
-  --tier-suggest-fg: #94a3b8;
-  --tier-suggest-bg: var(--slate-soft);
-  --tier-suggest-line: var(--slate-line);
-  --tier-draft-fg: var(--amber-hi);
-  --tier-draft-bg: var(--amber-soft);
-  --tier-draft-line: var(--amber-line);
-  --tier-auto-fg: var(--emerald-hi);
-  --tier-auto-bg: var(--emerald-soft);
-  --tier-auto-line: var(--emerald-line);
+  /* ——— Tier aliases (pill badges) ——— */
+  --tier-suggest-fg: #475569;
+  --tier-suggest-bg: #f1f5f9;
+  --tier-suggest-line: #e2e8f0;
+  --tier-draft-fg: #b45309;
+  --tier-draft-bg: #fffbeb;
+  --tier-draft-line: #fcd34d;
+  --tier-auto-fg: #047857;
+  --tier-auto-bg: #ecfdf5;
+  --tier-auto-line: #6ee7b7;
 
   /* ——— Typography ——— */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-sans);
-  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* ——— Shape & elevation ——— */
-  --r-sm: 4px;
-  --r-md: 6px;
-  --r-lg: 8px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
   --r-pill: 999px;
-  --shadow-card: 0 1px 2px rgba(2, 6, 17, 0.4);
-  --shadow-pop: 0 8px 24px -8px rgba(2, 6, 17, 0.6);
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.07), 0 1px 2px -1px rgb(15 23 42 / 0.04);
+  --shadow-pop: 0 16px 40px -16px rgb(15 23 42 / 0.2);
+  --shadow-lift: 0 14px 32px -14px rgb(15 23 42 / 0.18);
 
-  /* ——— Motion: functional only ——— */
-  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  /* ——— Motion: fast and linear ——— */
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --dur-micro: 120ms;
   --dur-med: 200ms;
 }
@@ -87,84 +94,104 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 34px;
-  padding: 8px 14px;
+  min-height: 36px;
+  padding: 8px 15px;
   border-radius: var(--r-sm);
   border: 1px solid var(--hairline-strong);
-  background: var(--surface-2);
-  color: var(--text-1);
+  background: var(--surface-1);
+  color: var(--text-2);
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: var(--shadow-sm);
   transition:
     background var(--dur-micro) var(--ease-out),
     border-color var(--dur-micro) var(--ease-out),
-    color var(--dur-micro) var(--ease-out);
+    color var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
 }
-.btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--hairline-strong); }
-.btn:active:not(:disabled) { background: var(--surface-2); transform: scale(0.98); }
+.btn:hover:not(:disabled) { background: var(--surface-2); transform: translateY(-1px); box-shadow: var(--shadow-card); }
+.btn:active:not(:disabled) { transform: translateY(0); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn.is-done { border-color: var(--emerald-line); color: var(--emerald-hi); }
 
+/* Primary action — royal blue */
 .btn-primary {
-  background: var(--emerald);
-  border-color: var(--emerald);
-  color: #04140e;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+  box-shadow: 0 1px 2px rgb(37 99 235 / 0.32);
 }
-.btn-primary:hover:not(:disabled) { background: var(--emerald-hi); border-color: var(--emerald-hi); }
-.btn-primary .tl-spinner { border-color: rgba(4, 20, 14, 0.35); border-top-color: #04140e; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hi); border-color: var(--primary-hi); }
 
-/* Confirm Correct — emerald outline, never filled */
-.btn-success-outline {
+/* Confirm — outline blue */
+.btn-blue-outline {
   background: transparent;
-  border-color: var(--emerald-line);
-  color: var(--emerald-hi);
+  border-color: var(--primary-line);
+  color: var(--primary);
+  box-shadow: none;
 }
-.btn-success-outline:hover:not(:disabled) {
-  background: var(--emerald-soft);
-  border-color: var(--emerald);
-}
+.btn-blue-outline:hover:not(:disabled) { background: var(--primary-soft); border-color: var(--primary); }
 
-/* Overturn — solid red */
+/* Overturn — ghost red, solid on hover */
+.btn-ghost-danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--danger);
+  box-shadow: none;
+}
+.btn-ghost-danger:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* Solid danger (kept for explicit destructive confirmations) */
 .btn-danger {
   background: var(--danger);
   border-color: var(--danger);
   color: #fff;
 }
-.btn-danger:hover:not(:disabled) { background: #dc2626; border-color: #dc2626; }
+.btn-danger:hover:not(:disabled) { background: var(--danger-hi); border-color: var(--danger-hi); }
 
+/* Neutral ghost */
 .btn-ghost {
   background: transparent;
   border-color: transparent;
   color: var(--text-3);
+  box-shadow: none;
 }
 .btn-ghost:hover:not(:disabled) { background: var(--slate-soft); color: var(--text-1); }
 
-.btn-sm { min-height: 30px; padding: 6px 11px; font-size: 12px; }
+.btn-sm { min-height: 32px; padding: 6px 12px; font-size: 12px; }
 
 .field {
   font: 500 13px var(--font-sans);
   color: var(--text-1);
-  background: var(--surface-2);
+  background: #f8fafc;
   border: 1px solid var(--hairline-strong);
   border-radius: var(--r-sm);
-  padding: 0 11px;
-  min-height: 34px;
-  transition: border-color var(--dur-micro) var(--ease-out);
+  padding: 0 12px;
+  min-height: 40px;
+  transition:
+    border-color var(--dur-micro) var(--ease-out),
+    background var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out);
 }
-.field:hover { border-color: var(--slate-line); }
-.field:focus { border-color: var(--emerald); outline: none; }
+.field:hover { border-color: #cbd5e1; }
+.field:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.13);
+}
 .field::placeholder { color: var(--text-4); }
+textarea.field { padding-block: 10px; line-height: 1.5; resize: vertical; }
 
-/* ——— Status badges ——— */
+/* ——— Status badges: pills ——— */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font: 600 10.5px/1 var(--font-sans);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: var(--r-sm);
+  gap: 6px;
+  font: 600 11px/1 var(--font-sans);
+  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
   border: 1px solid transparent;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -176,7 +203,7 @@
 .card {
   background: var(--surface-1);
   border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
 }
 

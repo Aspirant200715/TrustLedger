@@ -1,4 +1,7 @@
-/* Boot.css — brief, formal initialization overlay. */
+/* Boot.css — "Secure Handshake" intro.
+ * Light, calm, bank-app opening: a self-drawing seal, two sequencing status
+ * lines, then a soft fade-up into the dashboard. No glitches, no sliders.
+ */
 
 .tl-boot {
   position: fixed;
@@ -6,12 +9,17 @@
   z-index: 200;
   display: grid;
   place-items: center;
-  background: var(--ink-0);
-  animation: tl-fade-in 180ms var(--ease-out) both;
+  background:
+    radial-gradient(85% 65% at 50% 36%, rgba(37, 99, 235, 0.07), transparent 62%),
+    linear-gradient(180deg, #ffffff, #f6f8fb);
+  animation: tl-fade-in 160ms var(--ease-out) both;
 }
 .tl-boot.is-exiting {
   opacity: 0;
-  transition: opacity 280ms var(--ease-out);
+  transform: translateY(-10px);
+  transition:
+    opacity 320ms var(--ease-out),
+    transform 320ms var(--ease-out);
   pointer-events: none;
 }
 
@@ -19,62 +27,53 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
+/* Self-drawing seal */
 .tl-seal {
-  width: 46px;
-  height: 46px;
-  margin-bottom: 16px;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 20px;
+}
+.s-draw {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: var(--primary);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: tl-draw 620ms var(--ease-out) forwards;
+}
+.s-circle { animation-delay: 0ms; }
+.s-bars { animation-delay: 240ms; }
+.s-check { stroke: var(--emerald); animation-delay: 440ms; }
+
+@keyframes tl-draw {
+  to { stroke-dashoffset: 0; }
 }
 
 .tl-boot-word {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--text-1);
+  animation: tl-fade-in 320ms var(--ease-out) 140ms both;
 }
 
-.tl-boot-tag {
-  margin: 5px 0 0;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.tl-boot-status {
+  margin: 7px 0 0;
+  min-height: 18px;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--text-4);
+  animation: tl-fade-in 240ms var(--ease-out) both;
 }
-
-.tl-boot-meter {
-  margin-top: 22px;
-  width: 168px;
-  height: 2px;
-  background: rgba(148, 163, 184, 0.16);
-  overflow: hidden;
-  border-radius: 2px;
-}
-.tl-boot-meter-fill {
-  height: 100%;
-  width: 100%;
-  background: var(--emerald);
-  transform-origin: left;
-  animation: tl-boot-fill 1100ms var(--ease-out) both;
-}
-
-@keyframes tl-boot-fill {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
-/* Legacy decorative elements removed from markup; neutralised if referenced. */
-.tl-boot-glow,
-.tl-boot-streak,
-.tl-boot-grid,
-.tl-boot-rule,
-.tl-boot-hint { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .tl-boot { animation: none; }
-  .tl-boot-meter-fill { animation: none; }
+  .s-draw { animation: none; stroke-dashoffset: 0; }
+  .tl-boot-word, .tl-boot-status { animation: none; }
 }

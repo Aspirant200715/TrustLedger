@@ -1,54 +1,65 @@
-/* Dashboard.css — dashboard view composition. */
+/* Dashboard.css — dashboard view composition (fintech stat-cards layout). */
 
 .tl-dash-hero { max-width: 780px; }
-.tl-dash-section { display: flex; flex-direction: column; gap: 22px; }
+.tl-dash-section { display: flex; flex-direction: column; gap: 28px; }
 
-.tl-ingest-row { display: flex; gap: 8px; }
-.tl-ingest-row .field { flex: 1; min-width: 0; }
-
-/* Summary strip above the ledger grid */
-.tl-summary {
+/* KPI stat cards */
+.tl-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+.tl-kpi {
+  display: flex;
+  align-items: center;
+  gap: 15px;
   background: var(--surface-1);
-  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 17px 18px;
+  transition:
+    transform var(--dur-med) var(--ease-out),
+    box-shadow var(--dur-med) var(--ease-out),
+    border-color var(--dur-med) var(--ease-out);
 }
-.tl-summary-cell {
-  padding: 13px 16px;
-  border-right: 1px solid var(--hairline);
+.tl-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); border-color: var(--hairline-strong); }
+.tl-kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
-.tl-summary-cell:last-child { border-right: none; }
-.tl-summary-cell dt {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-4);
-  margin-bottom: 5px;
-}
-.tl-summary-cell dd {
+.tl-kpi-icon svg { width: 19px; height: 19px; }
+.tl-kpi-icon.blue { background: var(--primary-soft); color: var(--primary); }
+.tl-kpi-icon.emerald { background: var(--emerald-soft); color: var(--emerald-hi); }
+.tl-kpi-icon.amber { background: var(--amber-soft); color: var(--amber-hi); }
+.tl-kpi-icon.red { background: var(--danger-soft); color: var(--danger-hi); }
+.tl-kpi-num {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 19px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--text-1);
-  font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
-.tl-summary-cell .tl-summary-sub {
-  display: block;
-  margin-top: 4px;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--text-4);
+.tl-kpi-label { margin: 3px 0 0; font-size: 11.5px; color: var(--text-3); }
+
+/* Section cards */
+.tl-section-card {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: clamp(18px, 2.2vw, 24px);
 }
 
-@media (max-width: 680px) {
-  .tl-ingest-row { flex-direction: column; }
-  .tl-ingest-row .btn { justify-content: center; min-height: 40px; }
-  .tl-summary-cell { border-right: none; border-bottom: 1px solid var(--hairline); }
-  .tl-summary-cell:last-child { border-bottom: none; }
+@media (max-width: 640px) {
+  .tl-kpis { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 440px) {
+  .tl-kpis { grid-template-columns: 1fr; }
 }

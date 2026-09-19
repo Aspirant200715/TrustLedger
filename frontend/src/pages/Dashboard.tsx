@@ -1,12 +1,11 @@
 // Dashboard.tsx — the TrustLedger command shell.
-// Data orchestration + composition. All backend contact via src/api.ts
-// (no .env — the API base is fixed by CONTRACT.md). Boot overlay
-// choreographs first paint; Sidebar + TopBar frame four console views:
-// Dashboard, Live Pipeline, Escalation Docket, Audit Logs.
+// Data orchestration + composition. All backend contact via src/api.ts.
+// Boot overlay choreographs first paint; Sidebar + TopBar frame four console
+// views: Dashboard, Live Pipeline, Escalation Docket, Audit Logs.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { RefreshCw } from "lucide-react";
+import { FileText, Inbox, RefreshCw, RotateCcw, ShieldCheck } from "lucide-react";
 import {
   ApiError,
   getHealth,
@@ -32,7 +31,7 @@ import Pipeline from "../components/Pipeline";
 import Reveal from "../components/Reveal";
 import Sidebar, { type ViewId } from "../components/Sidebar";
 import { LedgerSkeletons } from "../components/Skeletons";
-import TopBar, { type TopStats } from "../components/TopBar";
+import TopBar from "../components/TopBar";
 import Toasts, { type Toast } from "../components/Toasts";
 import "./Dashboard.css";
 
@@ -50,7 +49,7 @@ type IngestPhase = "idle" | "working" | "done";
 
 const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
   dashboard: {
-    title: "Autonomy Ledger",
+    title: "Dashboard",
     subtitle: "Category trust records, review queue and tier simulation",
   },
   pipeline: {
@@ -58,7 +57,7 @@ const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
     subtitle: "Ingestion, investigation, decision and settlement status",
   },
   escalations: {
-    title: "Escalation Queue",
+    title: "Escalation Docket",
     subtitle: "Disputes awaiting human review and final determination",
   },
   audit: {
@@ -138,7 +137,7 @@ export default function Dashboard() {
     };
   }, []);
 
-  const topStats = useMemo<TopStats | null>(() => {
+  const topStats = useMemo(() => {
     if (!ledgers) return null;
     const resolved = ledgers.reduce((n, l) => n + l.lifetime_total, 0);
     const correct = ledgers.reduce((n, l) => n + l.lifetime_correct, 0);
@@ -260,10 +259,9 @@ export default function Dashboard() {
         <div className="tl-main-col">
           <TopBar
             title={meta.title}
-            subtitle={meta.subtitle}
-            stats={topStats}
             online={online}
             loadError={Boolean(loadError)}
+            pending={escalations.length}
           />
 
           <main className="tl-main">
@@ -298,7 +296,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
               >
                 {view === "dashboard" && (
                   <>
@@ -315,47 +313,41 @@ export default function Dashboard() {
                     </section>
 
                     {topStats && (
-                      <dl className="tl-summary" aria-label="Portfolio summary">
-                        <div className="tl-summary-cell">
-                          <dt>Pending review</dt>
-                          <dd>
-                            {escalations.length}
-                            <span className="tl-summary-sub">
-                              awaiting a human decision
-                            </span>
-                          </dd>
+                      <div className="tl-kpis" aria-label="Portfolio summary">
+                        <div className="tl-kpi">
+                          <span className="tl-kpi-icon blue" aria-hidden="true"><Inbox /></span>
+                          <div>
+                            <p className="tl-kpi-num">{escalations.length}</p>
+                            <p className="tl-kpi-label">Pending review · awaiting a human decision</p>
+                          </div>
                         </div>
-                        <div className="tl-summary-cell">
-                          <dt>Categories at auto</dt>
-                          <dd>
-                            {topStats.autoCount}/{topStats.totalCategories}
-                            <span className="tl-summary-sub">
-                              {topStats.draftCount} draft · {topStats.suggestCount} suggest only
-                            </span>
-                          </dd>
+                        <div className="tl-kpi">
+                          <span className="tl-kpi-icon emerald" aria-hidden="true"><ShieldCheck /></span>
+                          <div>
+                            <p className="tl-kpi-num">{topStats.autoCount}/{topStats.totalCategories}</p>
+                            <p className="tl-kpi-label">Categories at auto · {topStats.draftCount} draft · {topStats.suggestCount} suggest only</p>
+                          </div>
                         </div>
-                        <div className="tl-summary-cell">
-                          <dt>Overturned</dt>
-                          <dd>
-                            {topStats.overturned}
-                            <span className="tl-summary-sub">
-                              decisions reversed on review
-                            </span>
-                          </dd>
+                        <div className="tl-kpi">
+                          <span className="tl-kpi-icon red" aria-hidden="true"><RotateCcw /></span>
+                          <div>
+                            <p className="tl-kpi-num">{topStats.overturned}</p>
+                            <p className="tl-kpi-label">Overturned · decisions reversed on review</p>
+                          </div>
                         </div>
-                        <div className="tl-summary-cell">
-                          <dt>Disputes on record</dt>
-                          <dd>
-                            {disputes.length}
-                            <span className="tl-summary-sub">
-                              persisted pipeline records
-                            </span>
-                          </dd>
+                        <div className="tl-kpi">
+                          <span className="tl-kpi-icon amber" aria-hidden="true"><FileText /></span>
+                          <div>
+                            <p className="tl-kpi-num">{disputes.length}</p>
+                            <p className="tl-kpi-label">Disputes on record · persisted pipeline records</p>
+                          </div>
                         </div>
-                      </dl>
+                      </div>
                     )}
 
-                    <DisputeIngestForm onNotice={pushToast} />
+                    <Reveal>
+                      <DisputeIngestForm onNotice={pushToast} />
+                    </Reveal>
 
                     <section id="ledger" aria-labelledby="ledger-h" className="tl-anchor">
                       <Reveal>
@@ -363,7 +355,7 @@ export default function Dashboard() {
                           <div>
                             <h2 id="ledger-h">Trust Matrix</h2>
                             <p>
-                              Current tier, progress and last-ten outcomes for
+                              Current tier, accuracy and last-ten outcomes for
                               each governed dispute category.
                             </p>
                           </div>
@@ -395,18 +387,6 @@ export default function Dashboard() {
 
                     <Reveal>
                       <section className="tl-panel" aria-labelledby="queue-h">
-                        <div className="tl-section-head tl-section-head-split">
-                          <div>
-                            <h2 id="queue-h">Pending review</h2>
-                            <p>
-                              Each decision updates the category's autonomy
-                              record immediately.
-                            </p>
-                          </div>
-                          <span className="tl-count-badge" aria-label={`${escalations.length} pending`}>
-                            {escalations.length} pending
-                          </span>
-                        </div>
                         <EscalationQueue
                           rows={escRows}
                           busyId={busyReviewId}
@@ -435,7 +415,7 @@ export default function Dashboard() {
 
                 {view === "pipeline" && (
                   <Reveal>
-                    <section aria-labelledby="pipeline-h">
+                    <section className="tl-panel" aria-labelledby="pipeline-h">
                       <div className="tl-section-head">
                         <h2 id="pipeline-h">Live pipeline</h2>
                         <p>
@@ -458,7 +438,7 @@ export default function Dashboard() {
 
                 {view === "escalations" && (
                   <Reveal>
-                    <section aria-labelledby="esc-h">
+                    <section className="tl-panel" aria-labelledby="esc-h">
                       <div className="tl-section-head tl-section-head-split">
                         <div>
                           <h2 id="esc-h">Escalation docket</h2>

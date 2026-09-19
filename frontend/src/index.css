@@ -18,7 +18,8 @@ body {
 body {
   font-family: var(--font-sans);
   background: var(--ink-0);
-  color: var(--text-1);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
@@ -29,25 +30,25 @@ body {
 }
 
 ::selection {
-  background: rgba(16, 185, 129, 0.35);
-  color: #fff;
+  background: rgba(37, 99, 235, 0.22);
+  color: #0f172a;
 }
 
 .tl-scrollable {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
 }
 .tl-scrollable::-webkit-scrollbar { width: 8px; height: 8px; }
 .tl-scrollable::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.28);
+  background: rgba(100, 116, 139, 0.3);
   border-radius: 8px;
 }
 .tl-scrollable::-webkit-scrollbar-track { background: transparent; }
 
 :focus-visible {
-  outline: 2px solid var(--emerald);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {
