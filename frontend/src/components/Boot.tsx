@@ -49,14 +49,30 @@ export default function Boot({ onDone }: { onDone: () => void }) {
       role="presentation"
       aria-hidden="true"
     >
+      <span className="tl-boot-orb tl-boot-orb-1" />
+      <span className="tl-boot-orb tl-boot-orb-2" />
+      <span className="tl-boot-orb tl-boot-orb-3" />
+      <div className="tl-boot-grid" />
+
       <div className="tl-boot-core">
-        <svg className="tl-seal" viewBox="0 0 96 96" fill="none">
-          <circle className="s-draw s-circle" pathLength={1} cx="48" cy="48" r="40" />
-          <path className="s-draw s-bars" pathLength={1} d="M34 42h28M34 54h28" />
-          <path className="s-draw s-check" pathLength={1} d="M40 66l8 8 12-14" />
-        </svg>
+        <div className="tl-boot-sealwrap">
+          <span className="tl-boot-halo tl-boot-halo-1" aria-hidden="true" />
+          <span className="tl-boot-halo tl-boot-halo-2" aria-hidden="true" />
+          <svg className="tl-seal" viewBox="0 0 96 96" fill="none">
+            <circle className="s-draw s-circle" pathLength={1} cx="48" cy="48" r="40" />
+            <path className="s-draw s-bars" pathLength={1} d="M34 42h28M34 54h28" />
+            <path className="s-draw s-check" pathLength={1} d="M40 66l8 8 12-14" />
+          </svg>
+          <span className="tl-boot-shield" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" strokeLinejoin="round" />
+              <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </div>
 
         <p className="tl-boot-word">TrustLedger</p>
+        <p className="tl-boot-tag">Autonomy, Earned.</p>
         <p className="tl-boot-status" key={stage}>
           {stage === 0 ? "Establishing Trust Ledger…" : "Verifying Policy Engine…"}
         </p>

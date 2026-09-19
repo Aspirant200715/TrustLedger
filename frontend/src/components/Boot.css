@@ -1,6 +1,7 @@
-/* Boot.css — "Secure Handshake" intro, consumer-fintech grade.
- * Big self-drawing seal, bold wordmark, animated progress bar, blue energy
- * background — like a top-tier payment app boot. No sliders, no glitches.
+/* Boot.css — branded splash ("Secure Handshake"), payment-app grade.
+ * A rich royal-blue gradient canvas with floating light orbs, a faint dot
+ * grid, expanding halo rings behind a self-drawing white seal, a security
+ * badge, and a shimmer progress bar. Feels premium, never white-on-white.
  */
 
 .tl-boot {
@@ -9,86 +10,188 @@
   z-index: 200;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background:
-    radial-gradient(120% 70% at 50% 30%, rgba(37, 99, 235, 0.11), transparent 55%),
-    radial-gradient(60% 50% at 80% 70%, rgba(16, 185, 129, 0.06), transparent 55%),
-    linear-gradient(180deg, #f0f4ff 0%, #ffffff 60%, #f6f8fb 100%);
+    radial-gradient(110% 80% at 15% 0%, rgba(96, 165, 250, 0.45), transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(37, 99, 235, 0.5), transparent 55%),
+    radial-gradient(60% 60% at 80% 20%, rgba(129, 140, 248, 0.35), transparent 50%),
+    linear-gradient(160deg, #2563eb 0%, #1e40af 55%, #172554 100%);
   animation: tl-fade-in 200ms var(--ease-out) both;
 }
 .tl-boot.is-exiting {
   opacity: 0;
-  transform: translateY(-12px) scale(1.02);
+  transform: scale(1.04);
   transition:
-    opacity 360ms var(--ease-out),
-    transform 360ms var(--ease-out);
+    opacity 420ms var(--ease-out),
+    transform 420ms var(--ease-out);
   pointer-events: none;
 }
 
+/* Floating gradient orbs */
+.tl-boot-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform;
+}
+.tl-boot-orb-1 {
+  width: 340px;
+  height: 340px;
+  background: rgba(147, 197, 253, 0.5);
+  top: -90px;
+  left: -80px;
+  animation: tl-orb 9s ease-in-out infinite;
+}
+.tl-boot-orb-2 {
+  width: 280px;
+  height: 280px;
+  background: rgba(45, 212, 191, 0.3);
+  bottom: -70px;
+  right: -50px;
+  animation: tl-orb 11s ease-in-out infinite reverse;
+}
+.tl-boot-orb-3 {
+  width: 200px;
+  height: 200px;
+  background: rgba(199, 210, 254, 0.35);
+  top: 42%;
+  left: 58%;
+  animation: tl-orb 13s ease-in-out infinite 2s;
+}
+@keyframes tl-orb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -30px) scale(1.08); }
+}
+
+/* Faint dot grid */
+.tl-boot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.5px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(65% 60% at 50% 45%, #000 20%, transparent 100%);
+  mask-image: radial-gradient(65% 60% at 50% 45%, #000 20%, transparent 100%);
+}
+
 .tl-boot-core {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Self-drawing seal — big */
+/* Expanding halo rings behind the seal */
+.tl-boot-sealwrap {
+  position: relative;
+  margin-bottom: 30px;
+}
+.tl-boot-halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 190px;
+  height: 190px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  animation: tl-ring 3.4s var(--ease-out) infinite;
+}
+.tl-boot-halo-2 { animation-delay: 1.7s; }
+@keyframes tl-ring {
+  0% { width: 170px; height: 170px; opacity: 0.9; }
+  100% { width: 360px; height: 360px; opacity: 0; }
+}
+
+/* Self-drawing white seal */
 .tl-seal {
-  width: 84px;
-  height: 84px;
-  margin-bottom: 26px;
+  position: relative;
+  width: 92px;
+  height: 92px;
+  filter: drop-shadow(0 6px 24px rgba(2, 6, 23, 0.35));
 }
 .s-draw {
   fill: none;
   stroke-width: 4.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke: #2563eb;
+  stroke: #ffffff;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: tl-draw 680ms var(--ease-out) forwards;
 }
 .s-circle { animation-delay: 0ms; }
 .s-bars { animation-delay: 220ms; }
-.s-check { stroke: #10b981; animation-delay: 420ms; }
+.s-check { stroke: #6ee7b7; animation-delay: 420ms; }
 
 @keyframes tl-draw {
   to { stroke-dashoffset: 0; }
 }
 
+/* Security badge popping onto the seal */
+.tl-boot-shield {
+  position: absolute;
+  right: -10px;
+  bottom: -6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #1d4ed8;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.3);
+  animation: tl-pop-in 400ms var(--ease-out) 900ms both;
+}
+.tl-boot-shield svg { width: 16px; height: 16px; }
+
 .tl-boot-word {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 38px;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #0f172a;
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(2, 6, 23, 0.35);
   animation: tl-fade-in 360ms var(--ease-out) 160ms both;
 }
 
+.tl-boot-tag {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(199, 210, 254, 0.9);
+  animation: tl-fade-in 360ms var(--ease-out) 260ms both;
+}
+
 .tl-boot-status {
-  margin: 9px 0 0;
+  margin: 11px 0 0;
   min-height: 20px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #64748b;
+  color: rgba(241, 245, 249, 0.78);
   animation: tl-fade-in 260ms var(--ease-out) both;
 }
 
-/* Progress bar — like a payment app loading indicator */
+/* Shimmer progress bar */
 .tl-boot-bar {
-  margin-top: 28px;
-  width: 190px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(37, 99, 235, 0.12);
+  margin-top: 30px;
+  width: 200px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(2, 6, 23, 0.2);
 }
 .tl-boot-bar-fill {
   height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #2563eb, #3b82f6, #2563eb);
+  border-radius: 3px;
+  background: linear-gradient(90deg, #ffffff, #bfdbfe, #ffffff);
   background-size: 200% 100%;
-  animation: tl-boot-progress 1800ms var(--ease-out) both,
-             tl-boot-shimmer 1800ms linear infinite;
+  animation:
+    tl-boot-progress 1800ms var(--ease-out) both,
+    tl-boot-shimmer 1500ms linear infinite;
 }
 
 @keyframes tl-boot-progress {
@@ -102,7 +205,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tl-boot { animation: none; }
+  .tl-boot-orb { animation: none; }
+  .tl-boot-halo { animation: none; opacity: 0; }
   .s-draw { animation: none; stroke-dashoffset: 0; }
-  .tl-boot-word, .tl-boot-status { animation: none; }
+  .tl-boot-word, .tl-boot-tag, .tl-boot-status, .tl-boot-shield { animation: none; }
   .tl-boot-bar-fill { animation: none; width: 100%; }
 }
