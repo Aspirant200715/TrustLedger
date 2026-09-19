@@ -1,8 +1,9 @@
 // TopBar.tsx — global navigation bar.
 // Left: seal wordmark + breadcrumbs (Autonomy Console / <section>).
-// Right: system status pill, notification bell (dot when pending review),
-// and the operator avatar.
-import { Bell } from "lucide-react";
+// Right: dark-mode toggle, system status pill, notification bell (dot when
+// pending review), and the operator avatar.
+import { useEffect, useState } from "react";
+import { Bell, Moon, Sun } from "lucide-react";
 import "./layout.css";
 
 interface Props {
@@ -12,7 +13,37 @@ interface Props {
   pending: number;
 }
 
+const THEME_KEY = "tl-theme";
+
+function systemPrefersDark(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+}
+
 export default function TopBar({ title, online, loadError, pending }: Props) {
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem(THEME_KEY);
+    return saved ? saved === "dark" : systemPrefersDark();
+  });
+
+  // Keep the <html> class in sync with the theme state.
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  const toggleTheme = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+    } catch {
+      // storage unavailable — theme still applies for this session
+    }
+  };
+
   const degraded = loadError || !online;
   return (
     <header className="tl-topbar">
@@ -30,6 +61,15 @@ export default function TopBar({ title, online, loadError, pending }: Props) {
       </div>
 
       <div className="tl-topbar-right">
+        <button
+          type="button"
+          className="tl-icon-btn"
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          onClick={toggleTheme}
+        >
+          {dark ? <Sun /> : <Moon />}
+        </button>
+
         <span className={`tl-live-pill${degraded ? " is-down" : ""}`} role="status">
           <span className="tl-live-dot" aria-hidden="true" />
           {degraded ? (loadError ? "Backend degraded" : "Offline") : "System Operational"}

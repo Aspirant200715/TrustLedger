@@ -4,9 +4,9 @@
 import { useEffect, useRef, useState } from "react";
 import "./Boot.css";
 
-const DRAW_MS = 720;         // seal finishes drawing
-const VERIFY_MS = 760;       // "Verifying Policy Engine…" hold
-const EXIT_MS = 320;         // fade-up duration
+const DRAW_MS = 1000;        // seal finishes drawing
+const VERIFY_MS = 1100;      // "Verifying Policy Engine…" hold
+const EXIT_MS = 420;         // fade-up duration
 
 export default function Boot({ onDone }: { onDone: () => void }) {
   const [stage, setStage] = useState(0); // 0 = establishing, 1 = verifying

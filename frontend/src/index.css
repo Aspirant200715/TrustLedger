@@ -1,5 +1,9 @@
-/* index.css — base layer: reset, backdrop grain, scrollbar, focus, reduced motion. */
+/* index.css — base layer: Tailwind, design tokens, reset, scrollbar, focus, reduced motion. */
+@import "tailwindcss";
 @import "./theme.css";
+
+/* Class-based dark mode (toggled on <html> by the theme switcher). */
+@custom-variant dark (&:where(.dark, .dark *));
 
 * {
   box-sizing: border-box;
@@ -23,6 +27,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
+  transition: background var(--dur-med) var(--ease-out), color var(--dur-med) var(--ease-out);
 }
 
 #root {
@@ -32,6 +37,9 @@ body {
 ::selection {
   background: rgba(37, 99, 235, 0.22);
   color: #0f172a;
+}
+.dark ::selection {
+  color: #f1f5f9;
 }
 
 .tl-scrollable {
