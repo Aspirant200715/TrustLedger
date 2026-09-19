@@ -29,23 +29,23 @@ body {
 }
 
 ::selection {
-  background: rgba(227, 168, 60, 0.35);
+  background: rgba(16, 185, 129, 0.35);
   color: #fff;
 }
 
 .tl-scrollable {
   scrollbar-width: thin;
-  scrollbar-color: rgba(214, 196, 164, 0.3) transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
 }
 .tl-scrollable::-webkit-scrollbar { width: 8px; height: 8px; }
 .tl-scrollable::-webkit-scrollbar-thumb {
-  background: rgba(214, 196, 164, 0.28);
+  background: rgba(148, 163, 184, 0.28);
   border-radius: 8px;
 }
 .tl-scrollable::-webkit-scrollbar-track { background: transparent; }
 
 :focus-visible {
-  outline: 2px solid var(--aurum);
+  outline: 2px solid var(--emerald);
   outline-offset: 2px;
   border-radius: 4px;
 }

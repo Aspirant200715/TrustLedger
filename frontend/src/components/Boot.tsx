@@ -58,7 +58,7 @@ export default function Boot({ onDone }: { onDone: () => void }) {
             cx="48"
             cy="48"
             r="42"
-            stroke="#e3a83c"
+            stroke="#10b981"
             strokeWidth="1.5"
           />
           <circle
@@ -66,20 +66,20 @@ export default function Boot({ onDone }: { onDone: () => void }) {
             cx="48"
             cy="48"
             r="34"
-            stroke="rgba(227,168,60,0.35)"
+            stroke="rgba(16,185,129,0.35)"
             strokeWidth="1"
           />
           <path
             className="tl-seal-ledger"
             d="M30 40h36M30 48h36M30 56h22"
-            stroke="#c9c2b2"
+            stroke="#cbd5e1"
             strokeWidth="2"
             strokeLinecap="round"
           />
           <path
             className="tl-seal-check"
             d="M40 62l7 7 13-15"
-            stroke="#5fe3a5"
+            stroke="#34d399"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -94,7 +94,7 @@ export default function Boot({ onDone }: { onDone: () => void }) {
           ))}
         </h1>
         <div className="tl-boot-rule" />
-        <p className="tl-boot-tag">autonomy, earned.</p>
+        <p className="tl-boot-tag">Autonomy, Earned.</p>
       </div>
 
       <div className="tl-boot-meter">

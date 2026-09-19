@@ -1,8 +1,9 @@
 // api.ts — typed client for the TrustLedger backend (CONTRACT.md ## API contract).
 //
-// One function per endpoint. Base URL from VITE_API_BASE_URL, defaulting to
-// http://localhost:8000/api. Non-2xx responses throw ApiError carrying the
-// backend's {error, detail} shape.
+// One function per endpoint. The backend runs at http://localhost:8000 (CONTRACT.md
+// "Backend runs on http://localhost:8000, all routes prefixed with /api").
+// No .env file is required — the URL is fixed by contract. Non-2xx responses
+// throw ApiError carrying the backend's {error, detail} shape.
 import type {
   ApiErrorShape,
   DisputeCategory,
@@ -16,8 +17,7 @@ import type {
   SeedResponse,
 } from "./types";
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
+export const API_BASE_URL = "http://localhost:8000/api";
 
 export class ApiError extends Error {
   error: string;

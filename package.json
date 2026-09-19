@@ -1,0 +1,12 @@
+{
+  "name": "trustledger",
+  "private": true,
+  "type": "module",
+  "description": "Root bridge — the web app lives in frontend/, the backend in backend/. Enter runs the frontend through this entry point.",
+  "scripts": {
+    "dev": "cd frontend && pnpm dev",
+    "build": "cd frontend && pnpm build",
+    "lint": "cd frontend && pnpm lint",
+    "preview": "cd frontend && pnpm preview"
+  }
+}

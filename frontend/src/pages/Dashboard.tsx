@@ -1,11 +1,15 @@
-// Dashboard.tsx — the Clearing House floor.
-// Data orchestration + composition. All backend contact via src/api.ts;
-// contracts unchanged. Boot overlay choreographs first paint.
+// Dashboard.tsx — the TrustLedger command shell.
+// Data orchestration + composition. All backend contact via src/api.ts
+// (no .env — the API base is fixed by CONTRACT.md). Boot overlay
+// choreographs first paint; Sidebar + TopBar frame four console views:
+// Dashboard, Live Pipeline, Escalation Docket, Audit Logs.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ApiError,
   getLedger,
   ingestDispute,
+  listDisputes,
   listEscalations,
   reviewDispute,
   seedDemo,
@@ -15,13 +19,19 @@ import type {
   DisputeCategory,
   EscalationPacket,
   LedgerRecord,
+  MergedDispute,
 } from "../types";
+import { TIER_LABEL, inr } from "../format";
+import AuditLog from "../components/AuditLog";
 import Boot from "../components/Boot";
 import DemoTheater from "../components/DemoTheater";
-import EscalationQueue from "../components/EscalationQueue";
-import LedgerCard from "../components/LedgerCard";
+import EscalationQueue, { type EscalationRow } from "../components/EscalationQueue";
+import LedgerCard, { type OutcomeDot } from "../components/LedgerCard";
+import Pipeline from "../components/Pipeline";
 import Reveal from "../components/Reveal";
+import Sidebar, { type ViewId } from "../components/Sidebar";
 import { LedgerSkeletons } from "../components/Skeletons";
+import TopBar, { type TopStats } from "../components/TopBar";
 import Toasts, { type Toast } from "../components/Toasts";
 import "./Dashboard.css";
 
@@ -37,6 +47,25 @@ const POLL_MS = 3000;
 const DEMO_STEP_DELAY_MS = 320;
 
 type IngestPhase = "idle" | "working" | "done";
+
+const VIEW_META: Record<ViewId, { title: string; subtitle: string }> = {
+  dashboard: {
+    title: "Trust Ledger Dashboard",
+    subtitle: "Five categories, five balances of trust — accuracy promotes, overturns demote",
+  },
+  pipeline: {
+    title: "Live Pipeline",
+    subtitle: "Disputes moving through ingest → investigate → decide → act",
+  },
+  escalations: {
+    title: "Escalation Docket",
+    subtitle: "Human override desk — every verdict moves a tier",
+  },
+  audit: {
+    title: "Audit Logs",
+    subtitle: "Timestamped record of every state-changing action",
+  },
+};
 
 function errorText(err: unknown): string {
   return err instanceof ApiError ? `${err.error}: ${err.detail}` : String(err);
@@ -61,7 +90,9 @@ function useOnline(): boolean {
 
 export default function Dashboard() {
   const [booted, setBooted] = useState(false);
+  const [view, setView] = useState<ViewId>("dashboard");
   const [ledgers, setLedgers] = useState<LedgerRecord[] | null>(null);
+  const [disputes, setDisputes] = useState<MergedDispute[]>([]);
   const [escalations, setEscalations] = useState<EscalationPacket[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ingestCat, setIngestCat] = useState<DisputeCategory | "random">("random");
@@ -86,9 +117,14 @@ export default function Dashboard() {
   }, []);
 
   const refetch = useCallback(async () => {
-    const [ledgerRes, escRes] = await Promise.all([getLedger(), listEscalations()]);
+    const [ledgerRes, escRes, discRes] = await Promise.all([
+      getLedger(),
+      listEscalations(),
+      listDisputes(),
+    ]);
     setLedgers(ledgerRes.categories);
     setEscalations(escRes.escalations);
+    setDisputes(discRes.disputes);
   }, []);
 
   useEffect(() => {
@@ -116,18 +152,45 @@ export default function Dashboard() {
     };
   }, []);
 
-  const stats = useMemo(() => {
+  const topStats = useMemo<TopStats | null>(() => {
     if (!ledgers) return null;
-    const reviews = ledgers.reduce((n, l) => n + l.lifetime_total, 0);
-    const auto = ledgers.filter((l) => l.current_tier === "auto_execute").length;
+    const resolved = ledgers.reduce((n, l) => n + l.lifetime_total, 0);
     const correct = ledgers.reduce((n, l) => n + l.lifetime_correct, 0);
     return {
-      reviews,
-      auto,
-      pending: escalations.length,
-      accuracy: reviews === 0 ? "—" : `${((correct / reviews) * 100).toFixed(1)}%`,
+      resolved,
+      accuracy: resolved === 0 ? "—" : `${((correct / resolved) * 100).toFixed(1)}%`,
+      autoCount: ledgers.filter((l) => l.current_tier === "auto_execute").length,
+      draftCount: ledgers.filter((l) => l.current_tier === "draft_for_approval").length,
+      suggestCount: ledgers.filter((l) => l.current_tier === "suggest_only").length,
+      totalCategories: ledgers.length,
     };
-  }, [ledgers, escalations.length]);
+  }, [ledgers]);
+
+  // Join escalation packets with dispute records so rows can show real
+  // INR amounts + categories without a second backend call.
+  const escRows = useMemo<EscalationRow[]>(() => {
+    const byId = new Map(disputes.map((d) => [d.id, d]));
+    return escalations.flatMap((p) => {
+      const d = byId.get(p.dispute_id);
+      if (!d) return [];
+      return [{ packet: p, amount: d.amount, category: d.category }];
+    });
+  }, [escalations, disputes]);
+
+  // Per-category micro-trend: the last 10 reviewed outcomes, newest first.
+  const outcomesByCat = useMemo(() => {
+    const map = new Map<DisputeCategory, OutcomeDot[]>();
+    for (const cat of CATEGORIES) {
+      const arr: OutcomeDot[] = [];
+      for (const d of disputes) {
+        if (d.category !== cat || !d.review_outcome) continue;
+        arr.push(d.review_outcome === "confirmed_correct" ? "ok" : "overturned");
+        if (arr.length >= 10) break;
+      }
+      map.set(cat, arr);
+    }
+    return map;
+  }, [disputes]);
 
   const handleIngest = useCallback(async () => {
     setIngestPhase("working");
@@ -137,7 +200,7 @@ export default function Dashboard() {
       setIngestPhase("done");
       ingestTimer.current = window.setTimeout(() => setIngestPhase("idle"), 1400);
       pushToast(
-        `${res.dispute.category} · ₹${res.dispute.amount} → ${d?.final_path ?? "escalated"}${d?.stakes_override ? " · stakes override" : ""}`,
+        `${res.dispute.category} · ${inr(res.dispute.amount)} → ${d?.final_path ?? "escalated"}${d?.stakes_override ? " · stakes override" : ""}`,
       );
       await refetch();
     } catch (err) {
@@ -152,7 +215,7 @@ export default function Dashboard() {
       try {
         const res = await reviewDispute(disputeId, outcome);
         pushToast(
-          `${outcome === "overturned" ? "Overturned" : "Confirmed"} ${disputeId.slice(0, 8)} → ${res.ledger_after.category} now ${res.ledger_after.current_tier.replaceAll("_", " ")}`,
+          `${outcome === "overturned" ? "Overturned" : "Confirmed"} ${disputeId.slice(0, 8)} → ${res.ledger_after.category} now ${TIER_LABEL[res.ledger_after.current_tier]}`,
         );
         await refetch();
       } catch (err) {
@@ -194,6 +257,8 @@ export default function Dashboard() {
     [demoCat, refetch, pushToast],
   );
 
+  const meta = VIEW_META[view];
+
   return (
     <div className="tl-app">
       {!booted && <Boot onDone={() => setBooted(true)} />}
@@ -205,214 +270,212 @@ export default function Dashboard() {
         <span className="tl-grain" />
       </div>
 
-      <header className="tl-topbar">
-        <div className="tl-brand">
-          <span className="tl-mark" aria-hidden="true">
-            <i />
-          </span>
-          <span className="tl-brand-name">
-            Trust<em>Ledger</em>
-          </span>
-          <span className="tl-env-badge">clearing house</span>
-        </div>
-        <nav className="tl-nav" aria-label="Console sections">
-          <a href="#ledger">Ledger</a>
-          <a href="#desk">Desk</a>
-          <a href="#theater">Replay</a>
-        </nav>
-        <div className="tl-live" role="status">
-          <span className="tl-live-dot" aria-hidden="true" />
-          {loadError ? "backend unreachable" : "live · 3s sync"}
-        </div>
-      </header>
+      <div className="tl-shell">
+        <Sidebar
+          view={view}
+          pendingEscalations={escalations.length}
+          onNavigate={setView}
+        />
 
-      {booted && (
-      <main className="tl-main">
-        {!online && (
-          <div className="tl-offline anim-pop" role="alert">
-            <strong>You're offline.</strong> Showing the last synced state —
-            actions will fail until the connection returns.
-          </div>
-        )}
+        <div className="tl-main-col">
+          <TopBar
+            title={meta.title}
+            subtitle={meta.subtitle}
+            stats={topStats}
+            online={online}
+            loadError={Boolean(loadError)}
+          />
 
-        <section className="tl-hero anim-rise">
-          <p className="tl-kicker">Earned autonomy · real money · human override</p>
-          <h1 className="tl-display">
-            Every credit of trust,
-            <br />
-            <span className="tl-display-accent">settled in public.</span>
-          </h1>
-          <p className="tl-lede">
-            Each dispute category keeps its own ledger of autonomy. Correct
-            verdicts promote it toward auto-execution; one overturn demotes it.
-            Anything over ₹50,000 goes to a human — always.
-          </p>
-          {stats && (
-            <dl className="tl-stats">
-              <div className="tl-stat">
-                <dt>Cases settled</dt>
-                <dd className="tl-num">{stats.reviews}</dd>
+          <main className="tl-main">
+            {!online && (
+              <div className="tl-offline anim-pop" role="alert">
+                <strong>You're offline.</strong> Showing the last synced state —
+                actions will fail until the connection returns.
               </div>
-              <div className="tl-stat">
-                <dt>On auto-execute</dt>
-                <dd className="tl-num">
-                  {stats.auto}
-                  <span className="tl-dim">/5</span>
-                </dd>
-              </div>
-              <div className="tl-stat">
-                <dt>Awaiting humans</dt>
-                <dd className="tl-num">{stats.pending}</dd>
-              </div>
-              <div className="tl-stat">
-                <dt>Fleet accuracy</dt>
-                <dd className="tl-num">{stats.accuracy}</dd>
-              </div>
-            </dl>
-          )}
-        </section>
-
-        {loadError && (
-          <div className="tl-error anim-pop" role="alert">
-            <div>
-              <strong>Backend unreachable.</strong> {loadError}
-            </div>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => {
-                setLoadError(null);
-                refetch().catch((e: unknown) => setLoadError(errorText(e)));
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        <section id="ledger" aria-labelledby="ledger-h" className="tl-anchor">
-          <Reveal>
-            <div className="tl-section-head">
-              <h2 id="ledger-h">The autonomy ledger</h2>
-              <p>Five categories, five balances of trust. Accuracy promotes; overturns demote.</p>
-            </div>
-          </Reveal>
-          {!ledgers ? (
-            <LedgerSkeletons />
-          ) : (
-            <div className="tl-grid">
-              {CATEGORIES.map((cat, i) => {
-                const rec = ledgers.find((l) => l.category === cat);
-                if (!rec) return null;
-                return (
-                  <LedgerCard
-                    key={cat}
-                    record={rec}
-                    index={i}
-                    flashing={flashCat === cat}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <div className="tl-ops" id="desk">
-          <Reveal>
-            <section className="tl-panel" aria-labelledby="ingest-h">
-              <div className="tl-section-head">
-                <h2 id="ingest-h">Intake desk</h2>
-                <p>File a synthetic dispute through the full pipeline.</p>
-              </div>
-              <div className="tl-ingest-row">
-                <select
-                  className="field"
-                  value={ingestCat}
-                  onChange={(e) => setIngestCat(e.target.value as DisputeCategory | "random")}
-                  aria-label="Dispute category"
-                >
-                  <option value="random">Random category</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+            )}
+            {loadError && (
+              <div className="tl-error anim-pop" role="alert">
+                <div>
+                  <strong>Backend unreachable.</strong> {loadError}
+                </div>
                 <button
                   type="button"
-                  className={`btn btn-primary${ingestPhase === "done" ? " is-done" : ""}`}
-                  onClick={handleIngest}
-                  disabled={ingestPhase !== "idle"}
+                  className="btn btn-sm"
+                  onClick={() => {
+                    setLoadError(null);
+                    refetch().catch((e: unknown) => setLoadError(errorText(e)));
+                  }}
                 >
-                  {ingestPhase === "working" ? (
-                    <>
-                      <span className="tl-spinner" aria-hidden="true" /> Clearing…
-                    </>
-                  ) : ingestPhase === "done" ? (
-                    "✓ Filed"
-                  ) : (
-                    "File dispute"
-                  )}
+                  Retry
                 </button>
               </div>
-              <p className="tl-hint">
-                Roughly one draw in twenty exceeds ₹50,000 and trips the{" "}
-                <em>stakes override</em> — file until one lands to watch the
-                safety rail fire.
-              </p>
-            </section>
-          </Reveal>
+            )}
 
-          <Reveal delay={90}>
-            <section className="tl-panel" aria-labelledby="queue-h">
-              <div className="tl-section-head tl-section-head-split">
-                <div>
-                  <h2 id="queue-h">Review docket</h2>
-                  <p>Confirm or overturn — every verdict moves a tier.</p>
-                </div>
-                <span className="tl-count-badge" aria-label={`${escalations.length} pending`}>
-                  {escalations.length}
-                </span>
-              </div>
-              <EscalationQueue
-                packets={escalations}
-                busyId={busyReviewId}
-                loading={ledgers === null}
-                onReview={handleReview}
-              />
-            </section>
-          </Reveal>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={view}
+                className="tl-dash-section"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {view === "dashboard" && (
+                  <>
+                    <section className="tl-dash-hero anim-rise">
+                      <p className="tl-kicker">Earned autonomy · real money · human override</p>
+                      <h1 className="tl-display">
+                        Trust, credited.
+                        <br />
+                        <span className="tl-display-accent">Autonomy, earned.</span>
+                      </h1>
+                      <p className="tl-lede">
+                        Each dispute category keeps its own ledger of autonomy.
+                        Correct verdicts promote it toward auto-execution; one
+                        overturn demotes it. Anything over ₹50,000 routes to a
+                        human — always.
+                      </p>
+                    </section>
+
+                    <section id="ledger" aria-labelledby="ledger-h" className="tl-anchor">
+                      <Reveal>
+                        <div className="tl-section-head">
+                          <h2 id="ledger-h">The autonomy ledger</h2>
+                          <p>
+                            Five instruments, five balances of trust. Click any
+                            card to open its tier history — promotions level up,
+                            demotions glitch.
+                          </p>
+                        </div>
+                      </Reveal>
+                      {!ledgers ? (
+                        <LedgerSkeletons />
+                      ) : (
+                        <div className="tl-grid">
+                          {CATEGORIES.map((cat, i) => {
+                            const rec = ledgers.find((l) => l.category === cat);
+                            if (!rec) return null;
+                            return (
+                              <LedgerCard
+                                key={cat}
+                                record={rec}
+                                outcomes={outcomesByCat.get(cat) ?? []}
+                                index={i}
+                                flashing={flashCat === cat}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+
+                    <Reveal>
+                      <section className="tl-panel" aria-labelledby="queue-h">
+                        <div className="tl-section-head tl-section-head-split">
+                          <div>
+                            <h2 id="queue-h">Review docket</h2>
+                            <p>Confirm or overturn — every verdict moves a tier.</p>
+                          </div>
+                          <span className="tl-count-badge" aria-label={`${escalations.length} pending`}>
+                            {escalations.length} pending
+                          </span>
+                        </div>
+                        <EscalationQueue
+                          rows={escRows}
+                          busyId={busyReviewId}
+                          loading={ledgers === null}
+                          onReview={handleReview}
+                        />
+                      </section>
+                    </Reveal>
+
+                    <Reveal>
+                      <section className="tl-panel tl-theater-panel" id="theater" aria-labelledby="demo-h">
+                        <div className="tl-section-head">
+                          <h2 id="demo-h">Replay deck</h2>
+                          <p>
+                            The centerpiece: a 31-case climb — 15 to <em>draft</em>, 15
+                            toward <em>auto</em> — then a seeded overturn that demotes live.
+                          </p>
+                        </div>
+                        <DemoTheater running={demoCat} events={demoLog} onRun={handleDemo} />
+                      </section>
+                    </Reveal>
+                  </>
+                )}
+
+                {view === "pipeline" && (
+                  <Reveal>
+                    <section aria-labelledby="pipeline-h">
+                      <div className="tl-section-head">
+                        <h2 id="pipeline-h">Live pipeline</h2>
+                        <p>
+                          Every dispute the agent touches, in flight. Amber rows
+                          are waiting on a human; emerald rows executed.
+                        </p>
+                      </div>
+                      <Pipeline
+                        disputes={disputes}
+                        loading={ledgers === null}
+                        ingestCat={ingestCat}
+                        ingestPhase={ingestPhase}
+                        onIngestCat={setIngestCat}
+                        onIngest={handleIngest}
+                      />
+                    </section>
+                  </Reveal>
+                )}
+
+                {view === "escalations" && (
+                  <Reveal>
+                    <section aria-labelledby="esc-h">
+                      <div className="tl-section-head tl-section-head-split">
+                        <div>
+                          <h2 id="esc-h">Escalation docket</h2>
+                          <p>
+                            Anything the agent is not yet trusted to do alone.
+                            Tier caps, hard caps, and ₹50k+ stakes all land here.
+                          </p>
+                        </div>
+                        <span className="tl-count-badge" aria-label={`${escalations.length} pending`}>
+                          {escalations.length} pending
+                        </span>
+                      </div>
+                      <EscalationQueue
+                        rows={escRows}
+                        busyId={busyReviewId}
+                        loading={ledgers === null}
+                        onReview={handleReview}
+                      />
+                    </section>
+                  </Reveal>
+                )}
+
+                {view === "audit" && (
+                  <Reveal>
+                    <AuditLog disputes={disputes} ledgers={ledgers ?? []} loading={ledgers === null} />
+                  </Reveal>
+                )}
+              </motion.div>
+            </AnimatePresence>
+
+            <footer className="tl-footer">
+              <span>
+                TrustLedger · suggest <em>→</em> draft <em>→</em> auto · overturns
+                demote exactly one level
+              </span>
+              <a
+                className="tl-footer-link"
+                href="http://localhost:8000/api/ledger"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Raw ledger JSON ↗
+              </a>
+            </footer>
+          </main>
         </div>
-
-        <Reveal>
-          <section className="tl-panel tl-theater-panel" id="theater" aria-labelledby="demo-h">
-            <div className="tl-section-head">
-              <h2 id="demo-h">Replay deck</h2>
-              <p>
-                The centerpiece: a 31-case climb — 15 to <em>draft</em>, 15
-                toward <em>auto</em> — then a seeded overturn that demotes live.
-              </p>
-            </div>
-            <DemoTheater running={demoCat} events={demoLog} onRun={handleDemo} />
-          </section>
-        </Reveal>
-
-        <footer className="tl-footer">
-          <span>
-            TrustLedger · suggest <em>→</em> draft <em>→</em> auto · overturns
-            demote exactly one level
-          </span>
-          <a
-            className="tl-footer-link"
-            href="http://localhost:8000/api/ledger"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Raw ledger JSON ↗
-          </a>
-        </footer>
-      </main>
-      )}
+      </div>
 
       <Toasts toasts={toasts} />
     </div>
