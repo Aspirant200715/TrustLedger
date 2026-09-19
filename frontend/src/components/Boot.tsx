@@ -71,7 +71,17 @@ export default function Boot({ onDone }: { onDone: () => void }) {
           </span>
         </div>
 
-        <p className="tl-boot-word">TrustLedger</p>
+        <p className="tl-boot-word" aria-label="TrustLedger">
+          {"TrustLedger".split("").map((ch, i) => (
+            <span
+              key={i}
+              className="tl-boot-char"
+              style={{ animationDelay: `${180 + i * 42}ms` }}
+            >
+              {ch}
+            </span>
+          ))}
+        </p>
         <p className="tl-boot-tag">Autonomy, Earned.</p>
         <p className="tl-boot-status" key={stage}>
           {stage === 0 ? "Establishing Trust Ledger…" : "Verifying Policy Engine…"}
@@ -79,7 +89,21 @@ export default function Boot({ onDone }: { onDone: () => void }) {
         <div className="tl-boot-bar" aria-hidden="true">
           <div className="tl-boot-bar-fill" />
         </div>
+
+        <div className="tl-boot-chips" aria-hidden="true">
+          <span className="tl-boot-chip">
+            <i className="tl-boot-chip-dot c-emerald" /> Governed autonomy
+          </span>
+          <span className="tl-boot-chip">
+            <i className="tl-boot-chip-dot c-sky" /> Real-time ledger
+          </span>
+          <span className="tl-boot-chip">
+            <i className="tl-boot-chip-dot c-violet" /> AI investigation
+          </span>
+        </div>
       </div>
+
+      <p className="tl-boot-foot">Secured by Enter Cloud · Bank-grade policy engine</p>
     </div>
   );
 }
