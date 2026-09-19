@@ -155,12 +155,20 @@ export default function LedgerCard({ record, outcomes, flashing, index }: Props)
               ? "Maximum tier reached"
               : `${record.in_tier_correct} of ${threshold} in tier`}
         </span>
-        <span className="tl-stat-arrow">
-          {record.tier_history.length > 0
-            ? `${record.tier_history.length} change${record.tier_history.length === 1 ? "" : "s"}`
-            : "View details"}
+        <button
+          type="button"
+          className="tl-stat-arrow"
+          aria-expanded={open}
+          aria-controls={`tier-history-${record.category}`}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open
+            ? "Hide details"
+            : record.tier_history.length > 0
+              ? `${record.tier_history.length} change${record.tier_history.length === 1 ? "" : "s"}`
+              : "View details"}
           <ArrowRight aria-hidden="true" />
-        </span>
+        </button>
       </div>
 
       <div className="tl-stat-expand">

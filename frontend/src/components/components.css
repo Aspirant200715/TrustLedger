@@ -137,12 +137,18 @@
   color: var(--primary);
   font-weight: 600;
   font-size: 11.5px;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
+  background: none;
+  border: none;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  transition: background var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
 }
-.tl-stat:hover .tl-stat-arrow, .tl-stat:focus-within .tl-stat-arrow { opacity: 1; transform: none; }
-.tl-stat-arrow svg { width: 14px; height: 14px; }
+.tl-stat-arrow:hover { background: var(--primary-soft); }
+.tl-stat-arrow svg { width: 14px; height: 14px; transition: transform var(--dur-med) var(--ease-out); }
+.tl-stat.is-open .tl-stat-arrow svg { transform: rotate(90deg); }
 
 /* Tier history disclosure */
 .tl-stat-expand {
